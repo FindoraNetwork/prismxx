@@ -19,7 +19,7 @@ contract PrismXXBridge is Ownable {
     }
 
     modifier onlySystem {
-        require(msg.sender == address(0x00));
+        require(msg.sender == address(0xdD870fA1b7C4700F2BD7f44238821C26f7392148));
         _;
     }
 
@@ -31,9 +31,13 @@ contract PrismXXBridge is Ownable {
         asset_contract = _asset_contract;
     }
 
-    function depositERC20(address _erc20, address _owner, uint256 _value, bytes32 _receiver) public {
+    function depositERC20(address _erc20, uint256 _value, bytes32 _receiver) public {
         PrismXXAsset ac = PrismXXAsset(asset_contract);
         bytes32 asset = ac.addressToAsset(_erc20);
+
+        require(asset != 0x00);
+
+        address _owner = msg.sender;
 
         MintOp memory op = MintOp(asset, _receiver, _value);
 
@@ -63,6 +67,8 @@ contract PrismXXBridge is Ownable {
         PrismXXAsset ac = PrismXXAsset(asset_contract);
 
         address erc20 = ac.assetToAddress(_asset);
+
+        require(erc20 != address(0x00));
 
         bool isBurn = ac.isBurn(erc20);
 

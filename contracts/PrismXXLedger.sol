@@ -16,7 +16,7 @@ contract PrismXXLedger is Ownable {
         _;
     }
 
-    function adminSetAssetAddress(address _bridge) onlyOwner public {
+    function adminSetBridge(address _bridge) onlyOwner public {
         bridge = _bridge;
     }
 
