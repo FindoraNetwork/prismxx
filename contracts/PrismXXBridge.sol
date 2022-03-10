@@ -42,7 +42,7 @@ contract PrismXXBridge is Ownable {
         lc.depositERC20(erc20, owner, value);
     }
 
-    function consumeMint() onlySystem public view returns(MintOp[] memory) {
+    function consumeMint() public view returns(MintOp[] memory) {
         return ops;
     }
 
@@ -50,7 +50,7 @@ contract PrismXXBridge is Ownable {
         delete ops;
     }
 
-    function withdrawERC20(bytes32 _asset, address target, uint256 value) public {
+    function withdrawERC20(bytes32 _asset, address target, uint256 value) onlySystem public {
         PrismXXLedger lc = PrismXXLedger(ledger_contract);
         PrismXXAsset ac = PrismXXAsset(asset_contract);
 
