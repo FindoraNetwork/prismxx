@@ -23,11 +23,11 @@ contract PrismXXBridge is Ownable {
         _;
     }
 
-    function adminSetLedgerAddress(address _ledger_contract) onlyOwner public {
+    function adminSetLedger(address _ledger_contract) onlyOwner public {
         ledger_contract = _ledger_contract;
     }
 
-    function adminSetAssetAddress(address _asset_contract) onlyOwner public {
+    function adminSetAsset(address _asset_contract) onlyOwner public {
         asset_contract = _asset_contract;
     }
 
