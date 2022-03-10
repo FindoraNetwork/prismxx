@@ -27,3 +27,6 @@ typechain
 #Hardhat files
 cache
 artifacts
+
+**/target
+**/Cargo.lock
