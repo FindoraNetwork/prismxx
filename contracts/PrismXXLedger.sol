@@ -9,8 +9,6 @@ import "./interfaces/IERC20Burnable.sol";
 contract PrismXXLedger is Ownable {
     // Note, in here, Owner is bridge.
 
-    mapping(address => uint256) public amounts;
-
     address public bridge;
 
     modifier onlyBridge {
@@ -23,28 +21,24 @@ contract PrismXXLedger is Ownable {
     }
 
     function lockERC20(address erc20, address owner, uint256 value) onlyBridge public {
-        amounts[erc20] += value;
         IERC20 ct = IERC20(erc20);
 
         ct.transferFrom(owner, address(this), value);
     }
 
     function releaseERC20(address erc20, address owner, uint256 value) onlyBridge public {
-        amounts[erc20] -= value;
         IERC20 ct = IERC20(erc20);
 
         ct.transfer(owner, value);
     }
 
     function mintERC20(address _erc20, address _owner, uint256 _amount) onlyBridge public {
-        amounts[_erc20] -= _amount;
         IERC20Mintable ct = IERC20Mintable(_erc20);
 
         ct.mint(_owner, _amount);
     }
 
     function burnERC20(address _erc20, address _owner, uint256 _amount) onlyBridge public {
-        amounts[_erc20] += _amount;
         IERC20Burnable ct = IERC20Burnable(_erc20);
 
         ct.burnFrom(_owner, _amount);
