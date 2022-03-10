@@ -23,23 +23,31 @@ contract PrismXXBridge is Ownable {
         _;
     }
 
-    constructor() {
-        // use ledger address instead.
-        ledger_contract = address(0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B);
-        asset_contract = address(0xd9145CCE52D386f254917e481eB44e9943F39138);
+    function adminSetLedgerAddress(address _ledger_contract) onlyOwner public {
+        ledger_contract = _ledger_contract;
     }
 
-    function depositERC20(address erc20, address owner, uint256 value, bytes32 receiver) public {
-//         PrismXXAsset ac = PrismXXAsset(asset_contract);
-        // bytes32 asset = ac.addressToAsset(erc20);
-        //
-        // MintOp memory op = MintOp(asset, receiver, value);
-        //
-        // ops.push(op);
-        //
-        // PrismXXLedger lc = PrismXXLedger(ledger_contract);
-        //
-//         lc.depositERC20(erc20, owner, value);
+    function adminSetAssetAddress(address _asset_contract) onlyOwner public {
+        asset_contract = _asset_contract;
+    }
+
+    function depositERC20(address _erc20, address _owner, uint256 _value, bytes32 _receiver) public {
+        PrismXXAsset ac = PrismXXAsset(asset_contract);
+        bytes32 asset = ac.addressToAsset(_erc20);
+
+        MintOp memory op = MintOp(asset, _receiver, _value);
+
+        ops.push(op);
+
+        PrismXXLedger lc = PrismXXLedger(ledger_contract);
+
+        bool isBurn = ac.isBurn(_erc20);
+        
+        if (isBurn) {
+            lc.burnERC20(_erc20, _owner, _value);
+        } else {
+            lc.lockERC20(_erc20, _owner, _value);
+        }
     }
 
     function consumeMint() public view returns(MintOp[] memory) {
@@ -50,12 +58,18 @@ contract PrismXXBridge is Ownable {
         delete ops;
     }
 
-    function withdrawERC20(bytes32 _asset, address target, uint256 value) onlySystem public {
+    function withdrawERC20(bytes32 _asset, address _owner, uint256 _value) onlySystem public {
         PrismXXLedger lc = PrismXXLedger(ledger_contract);
         PrismXXAsset ac = PrismXXAsset(asset_contract);
 
         address erc20 = ac.assetToAddress(_asset);
 
-        // lc.withERC20(erc20, target, value);
+        bool isBurn = ac.isBurn(erc20);
+
+        if (isBurn) {
+            lc.mintERC20(erc20, _owner, _value);
+        } else {
+            lc.releaseERC20(erc20, _owner, _value);
+        }
     }
 }

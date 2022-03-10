@@ -21,10 +21,18 @@ contract PrismXXAsset is Ownable {
         assetToAddress[_asset] = _erc20;
     }
 
-    function adminResetAssetMappingByAddress(address erc20) public onlyOwner {
-        bytes32 asset = assetInfos[erc20].asset;
+    function adminResetAssetMappingByAddress(address _erc20) public onlyOwner {
+        bytes32 asset = assetInfos[_erc20].asset;
 
-        delete assetInfos[erc20];
+        delete assetInfos[_erc20];
         delete assetToAddress[asset];
+    }
+
+    function addressToAsset(address _erc20) public view returns(bytes32) {
+        return assetInfos[_erc20].asset;
+    }
+
+    function isBurn(address _erc20) public view returns(bool) {
+        return assetInfos[_erc20].isBurn;
     }
 }
