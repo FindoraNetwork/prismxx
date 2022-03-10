@@ -3,12 +3,11 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./interfaces/IERC20Mintable.sol";
+import "./interfaces/IERC20Burnable.sol";
 
 contract PrismXXLedger is Ownable {
     // Note, in here, Owner is bridge.
-
-    using SafeERC20 for IERC20;
 
     mapping(address => uint256) public amounts;
 
@@ -23,17 +22,31 @@ contract PrismXXLedger is Ownable {
         bridge = _bridge;
     }
 
-    function depositERC20(address erc20, address owner, uint256 value) onlyBridge public {
+    function lockERC20(address erc20, address owner, uint256 value) onlyBridge public {
         amounts[erc20] += value;
         IERC20 ct = IERC20(erc20);
 
-        ct.safeTransferFrom(owner, address(this), value);
+        ct.transferFrom(owner, address(this), value);
     }
 
-    function withERC20(address erc20, address owner, uint256 value) onlyBridge public {
+    function releaseERC20(address erc20, address owner, uint256 value) onlyBridge public {
         amounts[erc20] -= value;
         IERC20 ct = IERC20(erc20);
 
-        ct.safeTransfer(owner, value);
+        ct.transfer(owner, value);
+    }
+
+    function mintERC20(address _erc20, address _owner, uint256 _amount) onlyBridge public {
+        amounts[_erc20] -= _amount;
+        IERC20Mintable ct = IERC20Mintable(_erc20);
+
+        ct.mint(_owner, _amount);
+    }
+
+    function burnERC20(address _erc20, address _owner, uint256 _amount) onlyBridge public {
+        amounts[_erc20] += _amount;
+        IERC20Burnable ct = IERC20Burnable(_erc20);
+
+        ct.burnFrom(_owner, _amount);
     }
 }

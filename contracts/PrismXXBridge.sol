@@ -30,16 +30,16 @@ contract PrismXXBridge is Ownable {
     }
 
     function depositERC20(address erc20, address owner, uint256 value, bytes32 receiver) public {
-        PrismXXAsset ac = PrismXXAsset(asset_contract);
-        bytes32 asset = ac.addressToAsset(erc20);
-
-        MintOp memory op = MintOp(asset, receiver, value);
-
-        ops.push(op);
-
-        PrismXXLedger lc = PrismXXLedger(ledger_contract);
-
-        lc.depositERC20(erc20, owner, value);
+//         PrismXXAsset ac = PrismXXAsset(asset_contract);
+        // bytes32 asset = ac.addressToAsset(erc20);
+        //
+        // MintOp memory op = MintOp(asset, receiver, value);
+        //
+        // ops.push(op);
+        //
+        // PrismXXLedger lc = PrismXXLedger(ledger_contract);
+        //
+//         lc.depositERC20(erc20, owner, value);
     }
 
     function consumeMint() public view returns(MintOp[] memory) {
@@ -56,6 +56,6 @@ contract PrismXXBridge is Ownable {
 
         address erc20 = ac.assetToAddress(_asset);
 
-        lc.withERC20(erc20, target, value);
+        // lc.withERC20(erc20, target, value);
     }
 }
