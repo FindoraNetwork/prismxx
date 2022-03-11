@@ -63,14 +63,14 @@ contract PrismXXBridge is Ownable {
         }
     }
 
-    function consumeMint() public view returns(MintOp[] memory) {
-        return ops;
+    // This function called on end_block.
+    // Before this function called, mint _value FRA.
+    // This funtion don't cost gas.
+    function withdrawFRA(address payable _owner, uint256 _value) onlySystem public {
+        _owner.transfer(_value);
     }
 
-    function clearOps() onlySystem public {
-        delete ops;
-    }
-
+    // This funtion don't cost gas.
     function withdrawERC20(bytes32 _asset, address _owner, uint256 _value) onlySystem public {
         PrismXXLedger lc = PrismXXLedger(ledger_contract);
         PrismXXAsset ac = PrismXXAsset(asset_contract);
@@ -87,4 +87,13 @@ contract PrismXXBridge is Ownable {
             lc.releaseERC20(erc20, _owner, _value);
         }
     }
+
+    function consumeMint() public view returns(MintOp[] memory) {
+        return ops;
+    }
+
+    function clearOps() onlySystem public {
+        delete ops;
+    }
+
 }
