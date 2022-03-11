@@ -7,6 +7,9 @@ import "./PrismXXAsset.sol";
 
 contract PrismXXBridge is Ownable {
     // Note, in here, Owner is system.
+
+    bytes32 constant FRA = bytes32(0x00);
+
     address public ledger_contract;
     address public asset_contract;
 
@@ -19,7 +22,7 @@ contract PrismXXBridge is Ownable {
     }
 
     modifier onlySystem {
-        require(msg.sender == address(0xdD870fA1b7C4700F2BD7f44238821C26f7392148));
+        require(msg.sender == address(0x00));
         _;
     }
 
@@ -29,6 +32,12 @@ contract PrismXXBridge is Ownable {
 
     function adminSetAsset(address _asset_contract) onlyOwner public {
         asset_contract = _asset_contract;
+    }
+
+    function depositFRA(bytes32 _receiver) public payable {
+        MintOp memory op = MintOp(FRA, _receiver, msg.value);
+
+        ops.push(op);
     }
 
     function depositERC20(address _erc20, uint256 _value, bytes32 _receiver) public {
@@ -46,7 +55,7 @@ contract PrismXXBridge is Ownable {
         PrismXXLedger lc = PrismXXLedger(ledger_contract);
 
         bool isBurn = ac.isBurn(_erc20);
-        
+
         if (isBurn) {
             lc.burnERC20(_erc20, _owner, _value);
         } else {
