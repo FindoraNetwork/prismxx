@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-mkdir artifacts/infos
+
+mkdir -p artifacts/infos
 
 cat artifacts/contracts/PrismXXBridge.sol/PrismXXBridge.json | jq -r ".deployedBytecode" > artifacts/infos/PrismXXBridge.bytecode || exit 1
 cat artifacts/contracts/PrismXXBridge.sol/PrismXXBridge.json | jq -r ".abi" > artifacts/infos/PrismXXBridge.abi.json || exit 1
