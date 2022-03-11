@@ -88,12 +88,11 @@ contract PrismXXBridge is Ownable {
         }
     }
 
-    function consumeMint() public view returns(MintOp[] memory) {
-        return ops;
-    }
+    function consumeMint() public returns(MintOp[] memory) {
+        MintOp[] memory ret = ops;
 
-    function clearOps() onlySystem public {
         delete ops;
-    }
 
+        return ret;
+    }
 }
