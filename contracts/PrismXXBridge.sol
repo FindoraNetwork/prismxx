@@ -2,8 +2,8 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./PrismXXLedger.sol";
-import "./PrismXXAsset.sol";
+import "./interfaces/IPrismXXAsset.sol";
+import "./interfaces/IPrismXXLedger.sol";
 
 contract PrismXXBridge is Ownable {
     // Note, in here, Owner is system.
@@ -34,58 +34,56 @@ contract PrismXXBridge is Ownable {
         asset_contract = _asset_contract;
     }
 
+    // This function called by user.
+    // FRA will store in this contract.
+    // When end_block called, this contract's FRA will burn.
     function depositFRA(bytes32 _receiver) public payable {
         MintOp memory op = MintOp(FRA, _receiver, msg.value);
 
         ops.push(op);
     }
 
-    function depositERC20(address _erc20, uint256 _value, bytes32 _receiver) public {
-        PrismXXAsset ac = PrismXXAsset(asset_contract);
-        bytes32 asset = ac.addressToAsset(_erc20);
-
-        require(asset != 0x00);
-
-        address _owner = msg.sender;
-
-        MintOp memory op = MintOp(asset, _receiver, _value);
-
-        ops.push(op);
-
-        PrismXXLedger lc = PrismXXLedger(ledger_contract);
-
-        bool isBurn = ac.isBurn(_erc20);
-
-        if (isBurn) {
-            lc.burnERC20(_erc20, _owner, _value);
-        } else {
-            lc.lockERC20(_erc20, _owner, _value);
-        }
-    }
-
     // This function called on end_block.
-    // Before this function called, mint _value FRA.
+    // Before this function called, mint _value FRA to this contract.
     // This funtion don't cost gas.
     function withdrawFRA(address payable _owner, uint256 _value) onlySystem public {
         _owner.transfer(_value);
     }
 
+    // User deposit FRC20 token use this function.
+    function depositFRC20(address _frc20, uint256 _value, bytes32 _receiver) public {
+        IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        // Get asset type in UTXO.
+        bytes32 asset = ac.getAssetByAddress(_frc20);
+
+        // If asset don't regist, revert.
+        require(asset != 0x00);
+
+        address _owner = msg.sender;
+
+        // Build mintop for coinbase.
+        MintOp memory op = MintOp(asset, _receiver, _value);
+
+        ops.push(op);
+
+        IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
+
+        // deposit FRC20.
+        lc.depositFRC20(_frc20, _owner, _value);
+    }
+
     // This funtion don't cost gas.
     function withdrawERC20(bytes32 _asset, address _owner, uint256 _value) onlySystem public {
-        PrismXXLedger lc = PrismXXLedger(ledger_contract);
-        PrismXXAsset ac = PrismXXAsset(asset_contract);
+        IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
+        IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
-        address erc20 = ac.assetToAddress(_asset);
+        address frc20 = ac.getAddressByAsset(_asset);
 
-        require(erc20 != address(0x00));
+        // If asset don't regist, revert.
+        require(frc20 != address(0x00));
 
-        bool isBurn = ac.isBurn(erc20);
-
-        if (isBurn) {
-            lc.mintERC20(erc20, _owner, _value);
-        } else {
-            lc.releaseERC20(erc20, _owner, _value);
-        }
+        lc.withdrawFRC20(frc20, _owner, _value);
     }
 
     function consumeMint() public returns(MintOp[] memory) {
