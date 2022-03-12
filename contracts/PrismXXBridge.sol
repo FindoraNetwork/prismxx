@@ -21,6 +21,32 @@ contract PrismXXBridge is Ownable {
         uint256 amount;
     }
 
+    // Deposit FRA
+    // _from: from H160 address
+    // _to: to FRA address.
+    // _amount: amount to deposit.
+    event DepositFRA(address _from, bytes32 _to, uint256 _amount);
+
+    // Deposit FRC20
+    // _frc20: FRC20 contract address
+    // _from: from H160 address.
+    // _to: to FRA address.
+    // _amount: amount to deposit.
+    event DepositFRC20(address _frc20, address _from, bytes32 _to, uint256 _amount);
+
+    // Withdraw FRA
+    // _from: from FRA address
+    // _to: to H160 address.
+    // _amount: amount to deposit.
+    event WithdrawFRA(bytes32 _from, address _to, uint256 _amount);
+
+    // Withdraw FRC20
+    // _frc20: FRC20 contract address
+    // _from: from FRA address
+    // _to: to H160 address.
+    // _amount: amount to deposit.
+    event WithdrawFRC20(address _frc20, bytes32 _from, address _to, uint256 _amount);
+
     modifier onlySystem {
         require(msg.sender == address(0x00));
         _;
@@ -37,21 +63,25 @@ contract PrismXXBridge is Ownable {
     // This function called by user.
     // FRA will store in this contract.
     // When end_block called, this contract's FRA will burn.
-    function depositFRA(bytes32 _receiver) public payable {
-        MintOp memory op = MintOp(FRA, _receiver, msg.value);
+    function depositFRA(bytes32 _to) public payable {
+        MintOp memory op = MintOp(FRA, _to, msg.value);
 
         ops.push(op);
+
+        emit DepositFRA(msg.sender, _to, msg.value);
     }
 
     // This function called on end_block.
     // Before this function called, mint _value FRA to this contract.
     // This funtion don't cost gas.
-    function withdrawFRA(address payable _owner, uint256 _value) onlySystem public {
-        _owner.transfer(_value);
+    function withdrawFRA(bytes32 _from, address payable _to, uint256 _value) onlySystem public {
+        _to.transfer(_value);
+
+        emit WithdrawFRA(_from, _to, _value);
     }
 
     // User deposit FRC20 token use this function.
-    function depositFRC20(address _frc20, uint256 _value, bytes32 _receiver) public {
+    function depositFRC20(address _frc20, bytes32 _to, uint256 _value) public {
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
         // Get asset type in UTXO.
@@ -60,21 +90,23 @@ contract PrismXXBridge is Ownable {
         // If asset don't regist, revert.
         require(asset != 0x00);
 
-        address _owner = msg.sender;
+        address _from = msg.sender;
 
         // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _receiver, _value);
+        MintOp memory op = MintOp(asset, _to, _value);
 
         ops.push(op);
 
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
 
         // deposit FRC20.
-        lc.depositFRC20(_frc20, _owner, _value);
+        lc.depositFRC20(_frc20, _from, _value);
+
+        emit DepositFRC20(_frc20, _from, _to, _value);
     }
 
     // This funtion don't cost gas.
-    function withdrawERC20(bytes32 _asset, address _owner, uint256 _value) onlySystem public {
+    function withdrawERC20(bytes32 _asset, bytes32 _from, address _to, uint256 _value) onlySystem public {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -83,7 +115,9 @@ contract PrismXXBridge is Ownable {
         // If asset don't regist, revert.
         require(frc20 != address(0x00));
 
-        lc.withdrawFRC20(frc20, _owner, _value);
+        lc.withdrawFRC20(frc20, _to, _value);
+
+        emit WithdrawFRC20(frc20, _from, _to, _value);
     }
 
     function consumeMint() public returns(MintOp[] memory) {
