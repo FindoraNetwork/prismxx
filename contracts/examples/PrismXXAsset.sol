@@ -29,11 +29,11 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         delete assetToAddress[asset];
     }
 
-    function getAssetByAddress(address _frc20) override public view returns(bytes32) {
+    function getAssetByAddress(address _frc20) override external view returns(bytes32) {
         return assetInfos[_frc20].asset;
     }
 
-    function getAddressByAsset(bytes32 _asset) override public view returns(address) {
+    function getAddressByAsset(bytes32 _asset) override external view returns(address) {
         return assetToAddress[_asset];
     }
 
