@@ -2,6 +2,8 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import "../interfaces/IPrismXXAsset.sol";
 
 contract PrismXXAsset is Ownable, IPrismXXAsset {
@@ -38,11 +40,45 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         return assetToAddress[_asset];
     }
 
-    function toFRC20Decimal(address _frc20, uint256 amount) override external view returns(uint256) {
+    function depositDecimal(address _frc20, uint256 amount) override external view returns(uint256) {
+        IERC20Metadata mc = IERC20Metadata(_frc20);
+
+        uint8 assetDecimal = assetInfos[_frc20].decimal;
+        uint8 frc20Decimal = mc.decimals();
+
+        if (frc20Decimal > assetDecimal) {
+            uint8 diff = frc20Decimal - assetDecimal;
+            uint256 res = amount / (10 ** diff);
+
+            require(res * (10 ** diff) == amount, "Low digital must be 0." );
+
+            return res;
+        } else if (assetDecimal > frc20Decimal) {
+            uint8 diff = assetDecimal - frc20Decimal;
+
+            return amount * (10 ** diff);
+        }
         return amount;
     }
 
-    function toAssetDecimal(bytes32 asset, uint256 amount) override external view returns(uint256) {
+    function withdrawDecimal(address _frc20, uint256 amount) override external view returns(uint256) {
+        IERC20Metadata mc = IERC20Metadata(_frc20);
+
+        uint8 assetDecimal = assetInfos[_frc20].decimal;
+        uint8 frc20Decimal = mc.decimals();
+
+        if (assetDecimal > frc20Decimal) {
+            uint8 diff = assetDecimal - frc20Decimal;
+            uint256 res = amount / (10 ** diff);
+
+            require(res * (10 ** diff) == amount, "Low digital must be 0." );
+
+            return res;
+        } else if (frc20Decimal > assetDecimal) {
+            uint8 diff = frc20Decimal - assetDecimal;
+
+            return amount * (10 ** diff);
+        }
         return amount;
     }
 

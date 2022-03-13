@@ -69,18 +69,6 @@ contract PrismXXBridge is Ownable {
         return a * pow;
     }
 
-    function _smallDecimal(uint256 amount, uint8 decimal) private pure returns(uint256) {
-        uint256 pow = 10 ** decimal;
-
-        return amount / pow;
-    }
-
-    function _largeDecimal(uint256 amount, uint8 decimal) private pure returns(uint256) {
-        uint256 pow = 10 ** decimal;
-
-        return amount * pow;
-    }
-
     // This function called by user.
     // FRA will store in this contract.
     // When end_block called, this contract's FRA will burn.
@@ -120,8 +108,10 @@ contract PrismXXBridge is Ownable {
 
         address _from = msg.sender;
 
+        uint256 amount = ac.depositDecimal(_frc20, _value);
+
         // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, _value);
+        MintOp memory op = MintOp(asset, _to, amount);
 
         ops.push(op);
 
@@ -143,9 +133,11 @@ contract PrismXXBridge is Ownable {
         // If asset don't regist, revert.
         require(frc20 != address(0x00), "Asset type must registed");
 
-        lc.withdrawFRC20(frc20, _to, _value);
+        uint256 amount = ac.withdrawDecimal(frc20, _value);
 
-        emit WithdrawFRC20(frc20, _from, _to, _value);
+        lc.withdrawFRC20(frc20, _to, amount);
+
+        emit WithdrawFRC20(frc20, _from, _to, amount);
     }
 
     function consumeMint() public returns(MintOp[] memory) {
