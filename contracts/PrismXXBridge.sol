@@ -48,7 +48,7 @@ contract PrismXXBridge is Ownable {
     event WithdrawFRC20(address _frc20, bytes32 _from, address _to, uint256 _amount);
 
     modifier onlySystem {
-        require(msg.sender == address(0x00));
+        require(msg.sender == address(0x00), "Only system can call this function");
         _;
     }
 
@@ -60,21 +60,49 @@ contract PrismXXBridge is Ownable {
         asset_contract = _asset_contract;
     }
 
+    // Utils:
+    function _checkDecimal(uint256 amount, uint8 decimal) private pure returns(uint256) {
+        uint256 pow = 10 ** decimal;
+
+        uint256 a = amount / pow;
+
+        return a * pow;
+    }
+
+    function _smallDecimal(uint256 amount, uint8 decimal) private pure returns(uint256) {
+        uint256 pow = 10 ** decimal;
+
+        return amount / pow;
+    }
+
+    function _largeDecimal(uint256 amount, uint8 decimal) private pure returns(uint256) {
+        uint256 pow = 10 ** decimal;
+
+        return amount * pow;
+    }
+
     // This function called by user.
     // FRA will store in this contract.
     // When end_block called, this contract's FRA will burn.
     function depositFRA(bytes32 _to) public payable {
-        MintOp memory op = MintOp(FRA, _to, msg.value);
+        // Decimal mapping for FRA.
+        uint256 amount = msg.value;
+
+        require(_checkDecimal(amount, 12) == amount, "low 12 must be 0.");
+
+        MintOp memory op = MintOp(FRA, _to, amount);
 
         ops.push(op);
 
-        emit DepositFRA(msg.sender, _to, msg.value);
+        emit DepositFRA(msg.sender, _to, amount);
     }
 
     // This function called on end_block.
     // Before this function called, mint _value FRA to this contract.
     // This funtion don't cost gas.
     function withdrawFRA(bytes32 _from, address payable _to, uint256 _value) onlySystem public {
+        // Decimal mapping for FRA.
+
         _to.transfer(_value);
 
         emit WithdrawFRA(_from, _to, _value);
@@ -88,7 +116,7 @@ contract PrismXXBridge is Ownable {
         bytes32 asset = ac.getAssetByAddress(_frc20);
 
         // If asset don't regist, revert.
-        require(asset != 0x00);
+        require(asset != 0x00, "Asset type must registed");
 
         address _from = msg.sender;
 
@@ -113,7 +141,7 @@ contract PrismXXBridge is Ownable {
         address frc20 = ac.getAddressByAsset(_asset);
 
         // If asset don't regist, revert.
-        require(frc20 != address(0x00));
+        require(frc20 != address(0x00), "Asset type must registed");
 
         lc.withdrawFRC20(frc20, _to, _value);
 
