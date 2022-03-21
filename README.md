@@ -4,7 +4,12 @@ Prism++'s contract will work as Findora system contract to support ERC20 on Pris
 
 ## Depoly
 
-## Operate
+1. `PrismXXBridge` will depoly on some height auto.
+2. Write a contract `is` `IPrismXXAsset` and depoly.
+3. Write a contract `is` `IPrismXXLedger` and depoly.
+4. Set address of `IPrismXXAsset` and `IPrismXXLedger` into `PrismXXBridge`
+
+## Usage
 
 ### depositFRA
 
