@@ -2,6 +2,16 @@
 
 Prism++'s contract will work as Findora system contract to support ERC20 on Prism.
 
+## Architecture
+
+### System-contract
+
+### Coinbase
+
+### Burn/Mint Model
+
+### Lock/Release Model
+
 ## Deposit
 
 ### FRA
