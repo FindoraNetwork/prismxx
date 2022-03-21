@@ -7,4 +7,8 @@ contract GLDToken is ERC20 {
     constructor() ERC20("Gold", "GLD") {
         _mint(msg.sender, 8000000 * 10 ** decimals());
     }
+
+    function decimals() public view virtual override returns (uint8) {
+        return 6;
+    }
 }

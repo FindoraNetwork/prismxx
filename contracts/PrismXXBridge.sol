@@ -124,7 +124,7 @@ contract PrismXXBridge is Ownable {
     }
 
     // This funtion don't cost gas.
-    function withdrawERC20(bytes32 _asset, bytes32 _from, address _to, uint256 _value) onlySystem public {
+    function withdrawFRC20(bytes32 _asset, bytes32 _from, address _to, uint256 _value) onlySystem public {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -140,7 +140,7 @@ contract PrismXXBridge is Ownable {
         emit WithdrawFRC20(frc20, _from, _to, amount);
     }
 
-    function consumeMint() public returns(MintOp[] memory) {
+    function consumeMint() onlySystem public returns(MintOp[] memory) {
         MintOp[] memory ret = ops;
 
         delete ops;
