@@ -2,10 +2,12 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/IPrismXXAsset.sol";
 import "./interfaces/IPrismXXLedger.sol";
 
 contract PrismXXBridge is Ownable {
+    using Address for address;
     // Note, in here, Owner is system.
 
     bytes32 constant FRA = bytes32(0x00);
@@ -88,10 +90,10 @@ contract PrismXXBridge is Ownable {
     // This function called on end_block.
     // Before this function called, mint _value FRA to this contract.
     // This funtion don't cost gas.
-    function withdrawFRA(bytes32 _from, address payable _to, uint256 _value) onlySystem public {
+    function withdrawFRA(bytes32 _from, address payable _to, uint256 _value, bytes calldata _data) onlySystem public {
         // Decimal mapping for FRA.
 
-        _to.transfer(_value);
+        Address.functionCallWithValue(_to, _data, _value);
 
         emit WithdrawFRA(_from, _to, _value);
     }
@@ -124,7 +126,7 @@ contract PrismXXBridge is Ownable {
     }
 
     // This funtion don't cost gas.
-    function withdrawFRC20(bytes32 _asset, bytes32 _from, address _to, uint256 _value) onlySystem public {
+    function withdrawFRC20(bytes32 _asset, bytes32 _from, address _to, uint256 _value, bytes calldata _data) onlySystem public {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -135,7 +137,7 @@ contract PrismXXBridge is Ownable {
 
         uint256 amount = ac.withdrawDecimal(frc20, _value);
 
-        lc.withdrawFRC20(frc20, _to, amount);
+        lc.withdrawFRC20(frc20, _to, amount, _data);
 
         emit WithdrawFRC20(frc20, _from, _to, amount);
     }

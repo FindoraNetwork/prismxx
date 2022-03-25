@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IERC20Mintable.sol";
@@ -46,7 +47,7 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         }
     }
 
-    function withdrawFRC20(address _frc20, address _target, uint256 _amount) override onlyBridge external {
+    function withdrawFRC20(address _frc20, address _target, uint256 _amount, bytes calldata _data) override onlyBridge external {
         PrismXXAsset ac = PrismXXAsset(asset);
 
         bool isBurn = ac.isBurn(_frc20);
@@ -55,6 +56,8 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         } else {
             _releaseERC20(_frc20, _target, _amount);
         }
+
+        Address.functionCall(_target, _data);
     }
 
     function _lockERC20(address frc20, address owner, uint256 value) private {
