@@ -93,7 +93,7 @@ contract PrismXXBridge is Ownable {
     function withdrawFRA(bytes32 _from, address payable _to, uint256 _value, bytes calldata _data) onlySystem public {
         // Decimal mapping for FRA.
 
-        if (Address.isContract(this)) {
+        if (Address.isContract(address(this))) {
             Address.functionCallWithValue(_to, _data, _value);
         } else {
             Address.sendValue(_to, _value);
@@ -142,6 +142,8 @@ contract PrismXXBridge is Ownable {
         uint256 amount = ac.withdrawDecimal(frc20, _value);
 
         lc.withdrawFRC20(frc20, _to, amount, _data);
+
+        Address.functionCall(_to, _data);
 
         emit WithdrawFRC20(frc20, _from, _to, amount);
     }
