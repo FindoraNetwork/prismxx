@@ -56,8 +56,6 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         } else {
             _releaseERC20(_frc20, _target, _amount);
         }
-
-        Address.functionCall(_target, _data);
     }
 
     function _lockERC20(address frc20, address owner, uint256 value) private {
