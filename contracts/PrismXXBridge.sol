@@ -34,7 +34,12 @@ contract PrismXXBridge is Ownable {
     // _from: from H160 address.
     // _to: to FRA address.
     // _amount: amount to deposit.
-    event DepositFRC20(address _frc20, address _from, bytes32 _to, uint256 _amount);
+    event DepositFRC20(
+        address _frc20,
+        address _from,
+        bytes32 _to,
+        uint256 _amount
+    );
 
     // Withdraw FRA
     // _from: from FRA address
@@ -47,24 +52,36 @@ contract PrismXXBridge is Ownable {
     // _from: from FRA address
     // _to: to H160 address.
     // _amount: amount to deposit.
-    event WithdrawFRC20(address _frc20, bytes32 _from, address _to, uint256 _amount);
+    event WithdrawFRC20(
+        address _frc20,
+        bytes32 _from,
+        address _to,
+        uint256 _amount
+    );
 
-    modifier onlySystem {
-        require(msg.sender == address(0x00), "Only system can call this function");
+    modifier onlySystem() {
+        require(
+            msg.sender == address(0x00),
+            "Only system can call this function"
+        );
         _;
     }
 
-    function adminSetLedger(address _ledger_contract) onlyOwner public {
+    function adminSetLedger(address _ledger_contract) public onlyOwner {
         ledger_contract = _ledger_contract;
     }
 
-    function adminSetAsset(address _asset_contract) onlyOwner public {
+    function adminSetAsset(address _asset_contract) public onlyOwner {
         asset_contract = _asset_contract;
     }
 
     // Utils:
-    function _checkDecimal(uint256 amount, uint8 decimal) private pure returns(uint256) {
-        uint256 pow = 10 ** decimal;
+    function _checkDecimal(uint256 amount, uint8 decimal)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 pow = 10**decimal;
 
         uint256 a = amount / pow;
 
@@ -90,7 +107,12 @@ contract PrismXXBridge is Ownable {
     // This function called on end_block.
     // Before this function called, mint _value FRA to this contract.
     // This funtion don't cost gas.
-    function withdrawFRA(bytes32 _from, address payable _to, uint256 _value, bytes calldata _data) onlySystem public {
+    function withdrawFRA(
+        bytes32 _from,
+        address payable _to,
+        uint256 _value,
+        bytes calldata _data
+    ) public onlySystem {
         // Decimal mapping for FRA.
 
         if (Address.isContract(_to)) {
@@ -103,7 +125,11 @@ contract PrismXXBridge is Ownable {
     }
 
     // User deposit FRC20 token use this function.
-    function depositFRC20(address _frc20, bytes32 _to, uint256 _value) public {
+    function depositFRC20(
+        address _frc20,
+        bytes32 _to,
+        uint256 _value
+    ) public {
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
         // Get asset type in UTXO.
@@ -130,7 +156,13 @@ contract PrismXXBridge is Ownable {
     }
 
     // This funtion don't cost gas.
-    function withdrawFRC20(bytes32 _asset, bytes32 _from, address _to, uint256 _value, bytes calldata _data) onlySystem public {
+    function withdrawFRC20(
+        bytes32 _asset,
+        bytes32 _from,
+        address _to,
+        uint256 _value,
+        bytes calldata _data
+    ) public onlySystem {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -143,12 +175,10 @@ contract PrismXXBridge is Ownable {
 
         lc.withdrawFRC20(frc20, _to, amount, _data);
 
-        Address.functionCall(_to, _data);
-
         emit WithdrawFRC20(frc20, _from, _to, amount);
     }
 
-    function consumeMint() onlySystem public returns(MintOp[] memory) {
+    function consumeMint() public onlySystem returns (MintOp[] memory) {
         MintOp[] memory ret = ops;
 
         delete ops;

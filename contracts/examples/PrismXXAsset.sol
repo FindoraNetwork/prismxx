@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/IPrismXXAsset.sol";
 
 contract PrismXXAsset is Ownable, IPrismXXAsset {
-
     struct AssetInfo {
         bytes32 asset;
         bool isBurn;
@@ -17,8 +16,12 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
     mapping(address => AssetInfo) public assetInfos;
     mapping(bytes32 => address) public assetToAddress;
 
-
-    function adminSetAssetMaping(address _frc20, bytes32 _asset, bool _isBurn, uint8 _decimal) public onlyOwner {
+    function adminSetAssetMaping(
+        address _frc20,
+        bytes32 _asset,
+        bool _isBurn,
+        uint8 _decimal
+    ) public onlyOwner {
         AssetInfo memory info = AssetInfo(_asset, _isBurn, _decimal);
 
         assetInfos[_frc20] = info;
@@ -32,15 +35,30 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         delete assetToAddress[asset];
     }
 
-    function getAssetByAddress(address _frc20) override external view returns(bytes32) {
+    function getAssetByAddress(address _frc20)
+        external
+        view
+        override
+        returns (bytes32)
+    {
         return assetInfos[_frc20].asset;
     }
 
-    function getAddressByAsset(bytes32 _asset) override external view returns(address) {
+    function getAddressByAsset(bytes32 _asset)
+        external
+        view
+        override
+        returns (address)
+    {
         return assetToAddress[_asset];
     }
 
-    function depositDecimal(address _frc20, uint256 amount) override external view returns(uint256) {
+    function depositDecimal(address _frc20, uint256 amount)
+        external
+        view
+        override
+        returns (uint256)
+    {
         IERC20Metadata mc = IERC20Metadata(_frc20);
 
         uint8 assetDecimal = assetInfos[_frc20].decimal;
@@ -48,20 +66,25 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
 
         if (frc20Decimal > assetDecimal) {
             uint8 diff = frc20Decimal - assetDecimal;
-            uint256 res = amount / (10 ** diff);
+            uint256 res = amount / (10**diff);
 
-            require(res * (10 ** diff) == amount, "Low digital must be 0." );
+            require(res * (10**diff) == amount, "Low digital must be 0.");
 
             return res;
         } else if (assetDecimal > frc20Decimal) {
             uint8 diff = assetDecimal - frc20Decimal;
 
-            return amount * (10 ** diff);
+            return amount * (10**diff);
         }
         return amount;
     }
 
-    function withdrawDecimal(address _frc20, uint256 amount) override external view returns(uint256) {
+    function withdrawDecimal(address _frc20, uint256 amount)
+        external
+        view
+        override
+        returns (uint256)
+    {
         IERC20Metadata mc = IERC20Metadata(_frc20);
 
         uint8 assetDecimal = assetInfos[_frc20].decimal;
@@ -69,20 +92,20 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
 
         if (assetDecimal > frc20Decimal) {
             uint8 diff = assetDecimal - frc20Decimal;
-            uint256 res = amount / (10 ** diff);
+            uint256 res = amount / (10**diff);
 
-            require(res * (10 ** diff) == amount, "Low digital must be 0." );
+            require(res * (10**diff) == amount, "Low digital must be 0.");
 
             return res;
         } else if (frc20Decimal > assetDecimal) {
             uint8 diff = frc20Decimal - assetDecimal;
 
-            return amount * (10 ** diff);
+            return amount * (10**diff);
         }
         return amount;
     }
 
-    function isBurn(address _frc20) public view returns(bool) {
+    function isBurn(address _frc20) public view returns (bool) {
         return assetInfos[_frc20].isBurn;
     }
 }

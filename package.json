@@ -7,7 +7,12 @@
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.6.0",
     "hardhat": "^2.9.1",
-    "node": "^16.13.2"
+    "node": "^16.13.2",
+    "prettier": "^2.6.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.19"
+  },
+  "scripts": {
+    "prettier": "prettier --write 'contracts/**/*.sol'"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0"

@@ -18,7 +18,7 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
     address public bridge;
     address public asset;
 
-    modifier onlyBridge {
+    modifier onlyBridge() {
         require(msg.sender == bridge);
         _;
     }
@@ -28,55 +28,84 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         asset = _asset;
     }
 
-    function adminSetBridge(address _bridge) onlyOwner public {
+    function adminSetBridge(address _bridge) public onlyOwner {
         bridge = _bridge;
     }
 
-    function adminSetAsset(address _asset) onlyOwner public {
+    function adminSetAsset(address _asset) public onlyOwner {
         asset = _asset;
     }
 
-    function depositFRC20(address _frc20, address _target, uint256 _amount) override onlyBridge external {
+    function depositFRC20(
+        address _frc20,
+        address _target,
+        uint256 _amount
+    ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
         bool isBurn = ac.isBurn(_frc20);
-        if(isBurn) {
+        if (isBurn) {
             _burnERC20(_frc20, _target, _amount);
         } else {
             _lockERC20(_frc20, _target, _amount);
         }
     }
 
-    function withdrawFRC20(address _frc20, address _target, uint256 _amount, bytes calldata _data) override onlyBridge external {
+    function withdrawFRC20(
+        address _frc20,
+        address _target,
+        uint256 _amount,
+        bytes calldata _data
+    ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
         bool isBurn = ac.isBurn(_frc20);
-        if(isBurn) {
+        if (isBurn) {
             _mintERC20(_frc20, _target, _amount);
         } else {
             _releaseERC20(_frc20, _target, _amount);
         }
+
+        if (Address.isContract(_target)) {
+            Address.functionCall(_target, _data);
+        }
     }
 
-    function _lockERC20(address frc20, address owner, uint256 value) private {
+    function _lockERC20(
+        address frc20,
+        address owner,
+        uint256 value
+    ) private {
         IERC20 ct = IERC20(frc20);
 
         ct.safeTransferFrom(owner, address(this), value);
     }
 
-    function _releaseERC20(address frc20, address owner, uint256 value) private {
+    function _releaseERC20(
+        address frc20,
+        address owner,
+        uint256 value
+    ) private {
         IERC20 ct = IERC20(frc20);
 
         ct.safeTransfer(owner, value);
     }
 
-    function _mintERC20(address _frc20, address _owner, uint256 _amount) private {
+    function _mintERC20(
+        address _frc20,
+        address _owner,
+        uint256 _amount
+    ) private {
         IERC20Mintable ct = IERC20Mintable(_frc20);
 
         ct.mint(_owner, _amount);
     }
 
-    function _burnERC20(address _frc20, address _owner, uint256 _amount) private {
+    function _burnERC20(
+        address _frc20,
+        address _owner,
+        uint256 _amount
+    ) private {
         IERC20Burnable ct = IERC20Burnable(_frc20);
 
         ct.burnFrom(_owner, _amount);
