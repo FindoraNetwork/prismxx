@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./interfaces/IPrismXXAsset.sol";
 import "./interfaces/IPrismXXLedger.sol";
 
-contract PrismXXBridge is Ownable {
+contract PrismXXBridge is Initializable, OwnableUpgradeable {
     using Address for address;
     // Note, in here, Owner is system.
 
@@ -65,6 +67,10 @@ contract PrismXXBridge is Ownable {
             "Only system can call this function"
         );
         _;
+    }
+
+    function initialize() public initializer {
+        __Ownable_init();
     }
 
     function adminSetLedger(address _ledger_contract) public onlyOwner {
