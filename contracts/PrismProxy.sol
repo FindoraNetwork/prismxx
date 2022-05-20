@@ -4,10 +4,16 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/proxy/Proxy.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "./PrismXXBridge.sol";
+
 contract PrismProxy is Proxy, Ownable {
     address public prismBridgeAddress;
 
-    constructor() {}
+    constructor() {
+        PrismXXBridge bridge = new PrismXXBridge();
+
+        prismBridgeAddress = address(bridge);
+    }
 
     function adminSetPrismBridgeAddress(address _prismBridgeAddress)
         public
