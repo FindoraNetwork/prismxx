@@ -7,9 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract PrismProxy is Proxy, Ownable {
     address public prismBridgeAddress;
 
-    constructor(address _prismBridgeAddress) {
-        prismBridgeAddress = _prismBridgeAddress;
-    }
+    constructor() {}
 
     function adminSetPrismBridgeAddress(address _prismBridgeAddress)
         public
