@@ -10,12 +10,15 @@ contract PrismXXBridge is Ownable {
     using Address for address;
     // Note, in here, Owner is system.
 
-    bytes32 constant FRA = bytes32(0x00);
+    address private __self = address(this);
 
+    address public proxy_contract;
     address public ledger_contract;
     address public asset_contract;
 
     MintOp[] public ops;
+
+    bytes32 constant FRA = bytes32(0x00);
 
     struct MintOp {
         bytes32 asset;
@@ -65,6 +68,18 @@ contract PrismXXBridge is Ownable {
             "Only system can call this function"
         );
         _;
+    }
+
+    modifier onlyProxy() {
+        require(
+            msg.sender == proxy_contract,
+            "Only system can call this function"
+        );
+        _;
+    }
+
+    constructor(address _proxy_contract) {
+        proxy_contract = _proxy_contract;
     }
 
     function adminSetLedger(address _ledger_contract) public onlyOwner {
@@ -179,6 +194,10 @@ contract PrismXXBridge is Ownable {
     }
 
     function consumeMint() public onlySystem returns (MintOp[] memory) {
+        return __self._consumeMint();
+    }
+
+    function _consumeMint() public onlyProxy returns (MintOp[] memory) {
         MintOp[] memory ret = ops;
 
         delete ops;
