@@ -73,7 +73,7 @@ contract PrismXXBridge is Ownable {
     modifier onlyProxy() {
         require(
             msg.sender == proxy_contract,
-            "Only system can call this function"
+            "Only proxy can call this function"
         );
         _;
     }
