@@ -171,13 +171,13 @@ contract PrismXXBridge is Ownable {
     }
 
     // This funtion don't cost gas.
-    function withdrawFRC20(
+    function _withdrawFRC20(
         bytes32 _asset,
         bytes32 _from,
         address _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlySystem {
+    ) public onlyProxy {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -191,6 +191,18 @@ contract PrismXXBridge is Ownable {
         lc.withdrawFRC20(frc20, _to, amount, _data);
 
         emit WithdrawFRC20(frc20, _from, _to, amount);
+    }
+
+    function withdrawFRC20(
+        bytes32 _asset,
+        bytes32 _from,
+        address _to,
+        uint256 _value,
+        bytes calldata _data
+    ) public onlySystem {
+        PrismXXBridge bridge = PrismXXBridge(__self);
+
+        bridge._withdrawFRC20(_asset, _from, _to, _value, _data);
     }
 
     function consumeMint() public onlySystem returns (MintOp[] memory) {
