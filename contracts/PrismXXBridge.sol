@@ -194,7 +194,9 @@ contract PrismXXBridge is Ownable {
     }
 
     function consumeMint() public onlySystem returns (MintOp[] memory) {
-        return __self._consumeMint();
+        PrismXXBridge bridge = PrismXXBridge(__self);
+
+        return bridge._consumeMint();
     }
 
     function _consumeMint() public onlyProxy returns (MintOp[] memory) {

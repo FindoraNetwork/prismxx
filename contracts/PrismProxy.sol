@@ -10,7 +10,7 @@ contract PrismProxy is Proxy, Ownable {
     address public prismBridgeAddress;
 
     constructor() {
-        PrismXXBridge bridge = new PrismXXBridge();
+        PrismXXBridge bridge = new PrismXXBridge(address(this));
 
         prismBridgeAddress = address(bridge);
     }
