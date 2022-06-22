@@ -122,7 +122,7 @@ contract PrismXXBridge is Ownable {
     // This function called on end_block.
     // Before this function called, mint _value FRA to this contract.
     // This funtion don't cost gas.
-    function _withdrawFRA(
+    function withdrawFRA(
         bytes32 _from,
         address payable _to,
         uint256 _value,
@@ -139,18 +139,17 @@ contract PrismXXBridge is Ownable {
         emit WithdrawFRA(_from, _to, _value);
     }
 
-
-    function withdrawFRA(
-        bytes32 _from,
-        address payable _to,
-        uint256 _value,
-        bytes calldata _data
-    ) public onlySystem {
-        PrismXXBridge bridge = PrismXXBridge(__self);
-
-        bridge._withdrawFRA(_from, _to, _value, _data);
-    }
-
+    //     function withdrawFRA(
+    //     bytes32 _from,
+    //     address payable _to,
+    //     uint256 _value,
+    //     bytes calldata _data
+    // ) public onlySystem {
+    //     PrismXXBridge bridge = PrismXXBridge(__self);
+    //
+    //     bridge._withdrawFRA(_from, _to, _value, _data);
+    // }
+    //
     // User deposit FRC20 token use this function.
     function depositFRC20(
         address _frc20,
