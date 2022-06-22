@@ -130,26 +130,27 @@ contract PrismXXBridge is Ownable {
     ) public onlyProxy {
         // Decimal mapping for FRA.
 
+        Address.sendValue(payable(__self), _value);
+
+        PrismXXBridge bridge = PrismXXBridge(__self);
+
+        bridge._withdrawFRA(_to, _value, _data);
+
+        emit WithdrawFRA(_from, _to, _value);
+    }
+
+    function _withdrawFRA(
+        address payable _to,
+        uint256 _value,
+        bytes calldata _data
+    ) public onlySystem {
         if (Address.isContract(_to)) {
             Address.functionCallWithValue(_to, _data, _value);
         } else {
             Address.sendValue(_to, _value);
         }
-
-        emit WithdrawFRA(_from, _to, _value);
     }
 
-    //     function withdrawFRA(
-    //     bytes32 _from,
-    //     address payable _to,
-    //     uint256 _value,
-    //     bytes calldata _data
-    // ) public onlySystem {
-    //     PrismXXBridge bridge = PrismXXBridge(__self);
-    //
-    //     bridge._withdrawFRA(_from, _to, _value, _data);
-    // }
-    //
     // User deposit FRC20 token use this function.
     function depositFRC20(
         address _frc20,
