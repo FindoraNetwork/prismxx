@@ -127,7 +127,7 @@ contract PrismXXBridge is Ownable {
         address payable _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlyProxy {
+    ) public onlySystem {
         // Decimal mapping for FRA.
 
         Address.sendValue(payable(__self), _value);
@@ -143,7 +143,7 @@ contract PrismXXBridge is Ownable {
         address payable _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlySystem {
+    ) public onlyProxy {
         if (Address.isContract(_to)) {
             Address.functionCallWithValue(_to, _data, _value);
         } else {
