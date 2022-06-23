@@ -132,7 +132,7 @@ contract PrismXXBridge is Ownable {
 
         Address.sendValue(payable(__self), _value);
 
-        PrismXXBridge bridge = PrismXXBridge(__self);
+        PrismXXBridge bridge = PrismXXBridge(payable(__self));
 
         bridge._withdrawFRA(_to, _value, _data);
 
@@ -212,13 +212,13 @@ contract PrismXXBridge is Ownable {
         uint256 _value,
         bytes calldata _data
     ) public onlySystem {
-        PrismXXBridge bridge = PrismXXBridge(__self);
+        PrismXXBridge bridge = PrismXXBridge(payable(__self));
 
         bridge._withdrawFRC20(_asset, _from, _to, _value, _data);
     }
 
     function consumeMint() public onlySystem returns (MintOp[] memory) {
-        PrismXXBridge bridge = PrismXXBridge(__self);
+        PrismXXBridge bridge = PrismXXBridge(payable(__self));
 
         return bridge._consumeMint();
     }
@@ -230,4 +230,6 @@ contract PrismXXBridge is Ownable {
 
         return ret;
     }
+
+    receive() external payable {}
 }
