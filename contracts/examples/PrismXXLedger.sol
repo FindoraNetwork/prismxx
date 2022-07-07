@@ -5,16 +5,19 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "../interfaces/IERC20Mintable.sol";
 import "../interfaces/IERC20Burnable.sol";
 import "../interfaces/IPrismXXLedger.sol";
 import "./PrismXXAsset.sol";
 
+/**
+ * @dev prism ledger contract
+ */
 contract PrismXXLedger is Ownable, IPrismXXLedger {
     using SafeERC20 for IERC20;
 
     // Note, in here, Owner is bridge.
-
     address public bridge;
     address public asset;
 
@@ -23,19 +26,38 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         _;
     }
 
+    /**
+     * @dev constructor function, for init bridge and asset.
+     * @param _bridge contract address of bridge
+     * @param _asset contract address of token
+     */
     constructor(address _bridge, address _asset) {
         bridge = _bridge;
         asset = _asset;
     }
 
+    /**
+     * @dev Set bridge address, this function can only be called by owner.
+     * @param _bridge contract address of bridge
+     */
     function adminSetBridge(address _bridge) public onlyOwner {
         bridge = _bridge;
     }
 
+    /**
+     * @dev Set asset address, this function can only be called by owner.
+     * @param _asset contract address of token
+     */
     function adminSetAsset(address _asset) public onlyOwner {
         asset = _asset;
     }
 
+    /**
+     * @dev deposit FRC20 token, this function can only be called by Bridge.
+     * @param _frc20 contract address of token.
+     * @param _target from address.
+     * @param _amount amount for deposit.
+     */
     function depositFRC20(
         address _frc20,
         address _target,
@@ -51,6 +73,12 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         }
     }
 
+     /**
+     * @dev withdraw FRC20 token, this function can only be called by Bridge.
+     * @param _frc20 contract address of token.
+     * @param _target receive address.
+     * @param _amount amount for deposit.
+     */
     function withdrawFRC20(
         address _frc20,
         address _target,
@@ -71,6 +99,12 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         }
     }
 
+    /**
+     * @dev Transfer the amount from the owner address to the contract.
+     * @param frc20 contract address of token.
+     * @param owner user address.
+     * @param value amount to be transferred.
+     */
     function _lockERC20(
         address frc20,
         address owner,
@@ -81,6 +115,12 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         ct.safeTransferFrom(owner, address(this), value);
     }
 
+    /**
+     * @dev Transfer the amount from the contract to owner.
+     * @param frc20 contract address of token.
+     * @param owner user address.
+     * @param value amount to be transferred.
+     */
     function _releaseERC20(
         address frc20,
         address owner,
@@ -91,6 +131,12 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         ct.safeTransfer(owner, value);
     }
 
+    /**
+     * @dev Mint the token to owner.
+     * @param _frc20 contract address of token.
+     * @param _owner user address.
+     * @param _amount amount to be mint.
+     */
     function _mintERC20(
         address _frc20,
         address _owner,
@@ -101,6 +147,12 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         ct.mint(_owner, _amount);
     }
 
+    /**
+     * @dev Burn the token from owner.
+     * @param _frc20 contract address of token.
+     * @param _owner user address.
+     * @param _amount amount to be burn.
+     */
     function _burnERC20(
         address _frc20,
         address _owner,
