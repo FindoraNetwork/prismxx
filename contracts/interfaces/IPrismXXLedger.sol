@@ -28,18 +28,18 @@ interface IPrismXXLedger {
         bytes calldata _data
     ) external;
 
-    function depositFRC1155(
+    function depositFRC1155Batch(
         address _addr,
         address _target,
-        uint256 _id,
-        uint256 _amount
+        uint256[] calldata _ids,
+        uint256[] calldata _amounts
     ) external;
 
-    function withdrawFRC1155(
+    function withdrawFRC1155Batch(
         address _addr,
         address _target,
-        uint256 _id,
-        uint256 _amount,
+        uint256[] calldata _ids,
+        uint256[] calldata _amounts,
         bytes calldata _data
     ) external;
 }

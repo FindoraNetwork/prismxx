@@ -214,6 +214,8 @@ contract PrismXXBridge is Ownable {
         bridge._withdrawFRC20(_asset, _from, _to, _value, _data);
     }
 
+    // function depositFRC721()
+
     function consumeMint() public onlySystem returns (MintOp[] memory) {
         PrismXXBridge bridge = PrismXXBridge(payable(__self));
 
