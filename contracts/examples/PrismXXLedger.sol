@@ -134,15 +134,15 @@ contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
         ct.safeTransferFrom(address(this), _target, _id, _data);
     }
 
-    function depositFRC1155Batch(
+    function depositFRC1155(
         address _addr,
         address _target,
-        uint256[] calldata _ids,
-        uint256[] calldata _amounts
+        uint256 _id,
+        uint256 _amount
     ) external override onlyBridge {
         IERC1155 ct = IERC1155(_addr);
 
-        ct.safeBatchTransferFrom(_target, address(this), _ids, _amounts, "");
+        ct.safeTransferFrom(_target, address(this), _id, _amount, "");
     }
 
     function withdrawFRC1155(

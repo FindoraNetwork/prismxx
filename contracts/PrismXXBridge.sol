@@ -232,6 +232,61 @@ contract PrismXXBridge is Ownable {
         emit DepositFRC20(_frc20, _from, _to, _value);
     }
 
+    function depositFRC721(
+        address _addr,
+        bytes32 _to,
+        uint256 _id
+    ) public {
+        // Get asset type in UTXO.
+        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr));
+
+        IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        ac.setERC721Info(asset, _addr, _id);
+
+        address _from = msg.sender;
+
+        // Build mintop for coinbase.
+        MintOp memory op = MintOp(asset, _to, 1, 1, 1);
+
+        ops.push(op);
+
+        IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
+
+        // deposit FRC20.
+        lc.depositFRC721(_addr, _from, _id);
+
+        emit DepositFRC721(_addr, _from, _to, _id);
+    }
+
+    function depositFRC1155(
+        address _addr,
+        bytes32 _to,
+        uint256 _id,
+        uint256 _amount
+    ) public {
+        // Get asset type in UTXO.
+        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr));
+
+        IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        ac.setERC1155Info(asset, _addr, _id);
+
+        address _from = msg.sender;
+
+        // Build mintop for coinbase.
+        MintOp memory op = MintOp(asset, _to, _amount, 1, 0);
+
+        ops.push(op);
+
+        IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
+
+        // deposit FRC20.
+        lc.depositFRC1155(_addr, _from, _id, _amount);
+
+        emit DepositFRC721(_addr, _from, _to, _id);
+    }
+
     /**
      * @dev withdraw FRC20 token, this function can only be called by proxy.
      * @notice this funtion don't cost gas.
