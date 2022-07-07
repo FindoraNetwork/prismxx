@@ -6,15 +6,18 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/IPrismXXLedger.sol";
 import "./interfaces/IPrismXXAsset.sol";
 
+/**
+ * @dev prismXXBridge cross-chain bridge contract.
+ */
 contract PrismXXBridge is Ownable {
     using Address for address;
     // Note, in here, Owner is system.
 
     address private __self = address(this);
 
-    address public proxy_contract;
-    address public ledger_contract;
-    address public asset_contract;
+    address public proxy_contract;  // address of proxy contract
+    address public ledger_contract; // address of ledger contract
+    address public asset_contract;  // address of asset contract
 
     MintOp[] public ops;
 
@@ -80,14 +83,26 @@ contract PrismXXBridge is Ownable {
         _;
     }
 
+    /**
+     * @dev constructor function, for init proxy_contract.
+     * @param _proxy_contract address of proxy contract.
+     */
     constructor(address _proxy_contract) {
         proxy_contract = _proxy_contract;
     }
 
+    /**
+     * @dev Set contarct address of ledger, this function can only be called by owner.
+     * @param _ledger_contract address of ledger contract.
+     */
     function adminSetLedger(address _ledger_contract) public onlyOwner {
         ledger_contract = _ledger_contract;
     }
 
+    /**
+     * @dev Set contarct address of asset, this function can only be called by owner.
+     * @param _asset_contract address of asset contract.
+     */
     function adminSetAsset(address _asset_contract) public onlyOwner {
         asset_contract = _asset_contract;
     }
@@ -105,9 +120,13 @@ contract PrismXXBridge is Ownable {
         return a * pow;
     }
 
-    // This function called by user.
-    // FRA will store in this contract.
-    // When end_block called, this contract's FRA will burn.
+
+    /**
+     * @dev deposit FRA token, this function called by user.
+     * @notice FRA will store in this contract, When end_block called, this contract's FRA will burn.
+     *
+     * @param _to address of asset contract.
+     */
     function depositFRA(bytes32 _to) public payable {
         // Decimal mapping for FRA.
         uint256 amount = msg.value;
@@ -121,9 +140,16 @@ contract PrismXXBridge is Ownable {
         emit DepositFRA(msg.sender, _to, amount);
     }
 
-    // This function called on end_block.
-    // Before this function called, mint _value FRA to this contract.
-    // This funtion don't cost gas.
+    /**
+     * @dev withdraw FRA token.
+     * @notice This function called on end_block, Before this function called, mint _value FRA to this contract.
+     *   This funtion don't cost gas.
+     *
+     * @param _from from address of findora.
+     * @param _to receive address.
+     * @param _value amount of funds transferred.
+     * @param _data additional data when transferring funds.
+     */
     function withdrawFRA(
         bytes32 _from,
         address payable _to,
@@ -139,6 +165,12 @@ contract PrismXXBridge is Ownable {
         emit WithdrawFRA(_from, _to, _value);
     }
 
+    /**
+     * @dev withdraw FRA token.
+     * @param _to receive address.
+     * @param _value amount of funds transfer.
+     * @param _data additional data when transferring funds.
+     */
     function _withdrawFRA(
         address payable _to,
         uint256 _value,
@@ -151,7 +183,12 @@ contract PrismXXBridge is Ownable {
         }
     }
 
-    // User deposit FRC20 token use this function.
+    /**
+     * @dev User deposit FRC20 token use this function.
+     * @param _frc20 address of FRC20 token.
+     * @param _to receive address.
+     * @param _value amount of funds transfer.
+     */
     function depositFRC20(
         address _frc20,
         bytes32 _to,
@@ -179,7 +216,15 @@ contract PrismXXBridge is Ownable {
         emit DepositFRC20(_frc20, _from, _to, _value);
     }
 
-    // This funtion don't cost gas.
+    /**
+     * @dev withdraw FRC20 token, this function can only be called by proxy.
+     * @notice this funtion don't cost gas.
+     * @param _asset the encoded ID of the asset.
+     * @param _from from address of findora.
+     * @param _to receive address.
+     * @param _value amount of funds transferred.
+     * @param _data additional data when transferring funds.
+     */
     function _withdrawFRC20(
         bytes32 _asset,
         bytes32 _from,
@@ -202,6 +247,14 @@ contract PrismXXBridge is Ownable {
         emit WithdrawFRC20(frc20, _from, _to, _value);
     }
 
+    /**
+     * @dev withdraw FRC20 token, this function can only be called by system.
+     * @param _asset the encoded ID of the asset.
+     * @param _from from address of findora.
+     * @param _to receive address.
+     * @param _value amount of funds transferred.
+     * @param _data additional data when transferring funds.
+     */
     function withdrawFRC20(
         bytes32 _asset,
         bytes32 _from,
@@ -216,12 +269,20 @@ contract PrismXXBridge is Ownable {
 
     // function depositFRC721()
 
+    /**
+     * @dev Consume current MintOp entry, this function can only be called by system.
+     * @return current MintOp entry
+     */
     function consumeMint() public onlySystem returns (MintOp[] memory) {
         PrismXXBridge bridge = PrismXXBridge(payable(__self));
 
         return bridge._consumeMint();
     }
 
+    /**
+     * @dev Get and delete current MintOp entry, this function can only be called by proxy.
+     * @return current MintOp entry
+     */
     function _consumeMint() public onlyProxy returns (MintOp[] memory) {
         MintOp[] memory ret = ops;
 
@@ -230,5 +291,8 @@ contract PrismXXBridge is Ownable {
         return ret;
     }
 
+    /**
+     * @dev Fallback function in order to receive FRA.
+     */
     receive() external payable {}
 }

@@ -6,7 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import "../interfaces/IPrismXXAsset.sol";
 
+/**
+ * @dev prism asset manager contract
+ */
 contract PrismXXAsset is Ownable, IPrismXXAsset {
+    // status information for the asset
     struct AssetInfo {
         address addr;
         uint256 tokenId;

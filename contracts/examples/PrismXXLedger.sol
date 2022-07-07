@@ -25,19 +25,38 @@ contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
         _;
     }
 
+    /**
+     * @dev constructor function, for init bridge and asset.
+     * @param _bridge contract address of bridge
+     * @param _asset contract address of token
+     */
     constructor(address _bridge, address _asset) {
         bridge = _bridge;
         asset = _asset;
     }
 
+    /**
+     * @dev Set bridge address, this function can only be called by owner.
+     * @param _bridge contract address of bridge
+     */
     function adminSetBridge(address _bridge) public onlyOwner {
         bridge = _bridge;
     }
 
+    /**
+     * @dev Set asset address, this function can only be called by owner.
+     * @param _asset contract address of token
+     */
     function adminSetAsset(address _asset) public onlyOwner {
         asset = _asset;
     }
 
+    /**
+     * @dev deposit FRC20 token, this function can only be called by Bridge.
+     * @param _frc20 contract address of token.
+     * @param _target from address.
+     * @param _amount amount for deposit.
+     */
     function depositFRC20(
         address _frc20,
         address _target,
@@ -58,6 +77,12 @@ contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
         }
     }
 
+     /**
+     * @dev withdraw FRC20 token, this function can only be called by Bridge.
+     * @param _frc20 contract address of token.
+     * @param _target receive address.
+     * @param _amount amount for deposit.
+     */
     function withdrawFRC20(
         address _frc20,
         address _target,
