@@ -6,16 +6,35 @@ interface IPrismXXAsset {
 
     function setERC20Info(bytes32 _asset, address _addr) external;
 
-    function getNFTInfo(bytes32 _asset)
+    function getERC721Info(bytes32 _asset)
         external
         view
         returns (address, uint256);
 
-    function setNFTInfo(
+    function setERC721Info(
+        bytes32 _asset,
+        address _addr,
+        uint256 tokenId
+    ) external;
+
+    function getERC1155Info(bytes32 _asset)
+        external
+        view
+        returns (address, uint256);
+
+    function setERC1155Info(
         bytes32 _asset,
         address _addr,
         uint256 tokenId
     ) external;
 
     function isBurn(bytes32 _asset) external view returns (bool);
+
+    enum TokenType {
+        ERC20,
+        ERC721,
+        ERC1155
+    }
+
+    function getTokenType(bytes32 _asset) external view returns (TokenType);
 }

@@ -14,7 +14,7 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
     struct AssetInfo {
         address addr;
         uint256 tokenId;
-        bool isNFT;
+        TokenType ty;
         bool isBurn;
     }
 
@@ -35,7 +35,7 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         info.addr = _addr;
     }
 
-    function getNFTInfo(bytes32 _asset)
+    function getERC721Info(bytes32 _asset)
         external
         view
         override
@@ -46,7 +46,7 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         return (info.addr, info.tokenId);
     }
 
-    function setNFTInfo(
+    function setERC721Info(
         bytes32 _asset,
         address _addr,
         uint256 tokenId
@@ -55,7 +55,30 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
 
         info.addr = _addr;
         info.tokenId = tokenId;
-        info.isNFT = true;
+        info.ty = TokenType.ERC721;
+    }
+
+    function getERC1155Info(bytes32 _asset)
+        external
+        view
+        override
+        returns (address, uint256)
+    {
+        AssetInfo storage info = assets[_asset];
+
+        return (info.addr, info.tokenId);
+    }
+
+    function setERC1155Info(
+        bytes32 _asset,
+        address _addr,
+        uint256 tokenId
+    ) external override {
+        AssetInfo storage info = assets[_asset];
+
+        info.addr = _addr;
+        info.tokenId = tokenId;
+        info.ty = TokenType.ERC1155;
     }
 
     function setBurn(bytes32 _asset) external onlyOwner {
@@ -64,5 +87,14 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
 
     function isBurn(bytes32 _asset) external view override returns (bool) {
         return assets[_asset].isBurn;
+    }
+
+    function getTokenType(bytes32 _asset)
+        external
+        view
+        override
+        returns (TokenType)
+    {
+        return assets[_asset].ty;
     }
 }
