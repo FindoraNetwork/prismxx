@@ -8,104 +8,57 @@ import "../interfaces/IPrismXXAsset.sol";
 
 contract PrismXXAsset is Ownable, IPrismXXAsset {
     struct AssetInfo {
-        bytes32 asset;
+        address addr;
+        uint256 tokenId;
+        bool isNFT;
         bool isBurn;
-        uint8 decimal;
     }
 
-    mapping(address => AssetInfo) public assetInfos;
-    mapping(bytes32 => address) public assetToAddress;
+    mapping(bytes32 => AssetInfo) public assets;
 
-    function adminSetAssetMaping(
-        address _frc20,
-        bytes32 _asset,
-        bool _isBurn,
-        uint8 _decimal
-    ) public onlyOwner {
-        AssetInfo memory info = AssetInfo(_asset, _isBurn, _decimal);
-
-        assetInfos[_frc20] = info;
-        assetToAddress[_asset] = _frc20;
-    }
-
-    function adminResetAssetMappingByAddress(address _frc20) public onlyOwner {
-        bytes32 asset = assetInfos[_frc20].asset;
-
-        delete assetInfos[_frc20];
-        delete assetToAddress[asset];
-    }
-
-    function getAssetByAddress(address _frc20)
-        external
-        view
-        override
-        returns (bytes32)
-    {
-        return assetInfos[_frc20].asset;
-    }
-
-    function getAddressByAsset(bytes32 _asset)
+    function getERC20Info(bytes32 _asset)
         external
         view
         override
         returns (address)
     {
-        return assetToAddress[_asset];
+        return assets[_asset].addr;
     }
 
-    function depositDecimal(address _frc20, uint256 amount)
+    function setERC20Info(bytes32 _asset, address _addr) external override {
+        AssetInfo storage info = assets[_asset];
+
+        info.addr = _addr;
+    }
+
+    function getNFTInfo(bytes32 _asset)
         external
         view
         override
-        returns (uint256)
+        returns (address, uint256)
     {
-        IERC20Metadata mc = IERC20Metadata(_frc20);
+        AssetInfo storage info = assets[_asset];
 
-        uint8 assetDecimal = assetInfos[_frc20].decimal;
-        uint8 frc20Decimal = mc.decimals();
-
-        if (frc20Decimal > assetDecimal) {
-            uint8 diff = frc20Decimal - assetDecimal;
-            uint256 res = amount / (10**diff);
-
-            require(res * (10**diff) == amount, "Low digital must be 0.");
-
-            return res;
-        } else if (assetDecimal > frc20Decimal) {
-            uint8 diff = assetDecimal - frc20Decimal;
-
-            return amount * (10**diff);
-        }
-        return amount;
+        return (info.addr, info.tokenId);
     }
 
-    function withdrawDecimal(address _frc20, uint256 amount)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        IERC20Metadata mc = IERC20Metadata(_frc20);
+    function setNFTInfo(
+        bytes32 _asset,
+        address _addr,
+        uint256 tokenId
+    ) external override {
+        AssetInfo storage info = assets[_asset];
 
-        uint8 assetDecimal = assetInfos[_frc20].decimal;
-        uint8 frc20Decimal = mc.decimals();
-
-        if (assetDecimal > frc20Decimal) {
-            uint8 diff = assetDecimal - frc20Decimal;
-            uint256 res = amount / (10**diff);
-
-            require(res * (10**diff) == amount, "Low digital must be 0.");
-
-            return res;
-        } else if (frc20Decimal > assetDecimal) {
-            uint8 diff = frc20Decimal - assetDecimal;
-
-            return amount * (10**diff);
-        }
-        return amount;
+        info.addr = _addr;
+        info.tokenId = tokenId;
+        info.isNFT = true;
     }
 
-    function isBurn(address _frc20) public view returns (bool) {
-        return assetInfos[_frc20].isBurn;
+    function setBurn(bytes32 _asset) external onlyOwner {
+        assets[_asset].isBurn = true;
+    }
+
+    function isBurn(bytes32 _asset) external view override returns (bool) {
+        return assets[_asset].isBurn;
     }
 }

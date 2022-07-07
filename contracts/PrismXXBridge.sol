@@ -3,8 +3,8 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "./interfaces/IPrismXXAsset.sol";
 import "./interfaces/IPrismXXLedger.sol";
+import "./interfaces/IPrismXXAsset.sol";
 
 contract PrismXXBridge is Ownable {
     using Address for address;
@@ -24,6 +24,8 @@ contract PrismXXBridge is Ownable {
         bytes32 asset;
         bytes32 receiver;
         uint256 amount;
+        uint8 decimal;
+        uint256 max_supply;
     }
 
     // Deposit FRA
@@ -112,7 +114,7 @@ contract PrismXXBridge is Ownable {
 
         require(_checkDecimal(amount, 12) == amount, "low 12 must be 0.");
 
-        MintOp memory op = MintOp(FRA, _to, amount);
+        MintOp memory op = MintOp(FRA, _to, amount, 6, 0);
 
         ops.push(op);
 
@@ -128,8 +130,6 @@ contract PrismXXBridge is Ownable {
         uint256 _value,
         bytes calldata _data
     ) public onlySystem {
-        // Decimal mapping for FRA.
-
         Address.sendValue(payable(__self), _value);
 
         PrismXXBridge bridge = PrismXXBridge(payable(__self));
@@ -157,20 +157,17 @@ contract PrismXXBridge is Ownable {
         bytes32 _to,
         uint256 _value
     ) public {
+        // Get asset type in UTXO.
+        bytes32 asset = keccak256(abi.encode(_frc20));
+
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
-        // Get asset type in UTXO.
-        bytes32 asset = ac.getAssetByAddress(_frc20);
-
-        // If asset don't regist, revert.
-        require(asset != 0x00, "Asset type must registed");
+        ac.setERC20Info(asset, _frc20);
 
         address _from = msg.sender;
 
-        uint256 amount = ac.depositDecimal(_frc20, _value);
-
         // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, amount);
+        MintOp memory op = MintOp(asset, _to, _value, 6, 0);
 
         ops.push(op);
 
@@ -193,16 +190,16 @@ contract PrismXXBridge is Ownable {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
-        address frc20 = ac.getAddressByAsset(_asset);
+        address frc20 = ac.getERC20Info(_asset);
 
         // If asset don't regist, revert.
         require(frc20 != address(0x00), "Asset type must registed");
 
-        uint256 amount = ac.withdrawDecimal(frc20, _value);
+        require(_checkDecimal(_value, 12) == _value, "low 12 must be 0.");
 
-        lc.withdrawFRC20(frc20, _to, amount, _data);
+        lc.withdrawFRC20(frc20, _to, _value, _data);
 
-        emit WithdrawFRC20(frc20, _from, _to, amount);
+        emit WithdrawFRC20(frc20, _from, _to, _value);
     }
 
     function withdrawFRC20(

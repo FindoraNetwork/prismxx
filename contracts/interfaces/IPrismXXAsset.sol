@@ -2,19 +2,20 @@
 pragma solidity ^0.8.4;
 
 interface IPrismXXAsset {
-    function getAssetByAddress(address _frc20) external view returns (bytes32);
+    function getERC20Info(bytes32 _asset) external view returns (address);
 
-    function getAddressByAsset(bytes32 _asset) external view returns (address);
+    function setERC20Info(bytes32 _asset, address _addr) external;
 
-    function depositDecimal(address _frc20, uint256 amount)
+    function getNFTInfo(bytes32 _asset)
         external
         view
-        returns (uint256);
+        returns (address, uint256);
 
-    function withdrawDecimal(address _frc20, uint256 amount)
-        external
-        view
-        returns (uint256);
+    function setNFTInfo(
+        bytes32 _asset,
+        address _addr,
+        uint256 tokenId
+    ) external;
 
-    // function checkDecimal(address _frc20, uint256 amount) external view returns(uint256);
+    function isBurn(bytes32 _asset) external view returns (bool);
 }
