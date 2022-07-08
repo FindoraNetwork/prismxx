@@ -56,7 +56,13 @@ contract PrismXXBridge is Ownable {
 
     event DepositFRC721(address _addr, address _from, bytes32 _to, uint256 _id);
 
-    event DepositFRC1155(address _addr, address _from, bytes32 _to, uint256 _id, uint256 amount);
+    event DepositFRC1155(
+        address _addr,
+        address _from,
+        bytes32 _to,
+        uint256 _id,
+        uint256 amount
+    );
 
     // Withdraw FRA
     // _from: from FRA address
@@ -231,8 +237,11 @@ contract PrismXXBridge is Ownable {
 
         uint8 decimal = erc20.decimals();
 
-        if(decimal > 6) {
-            require(_checkDecimal(_value, decimal - 6) == _value, "low 12 must be 0.");
+        if (decimal > 6) {
+            require(
+                _checkDecimal(_value, decimal - 6) == _value,
+                "low 12 must be 0."
+            );
         }
 
         // Get asset type in UTXO.
