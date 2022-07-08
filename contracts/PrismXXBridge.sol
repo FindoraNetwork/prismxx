@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interfaces/IPrismXXLedger.sol";
 import "./interfaces/IPrismXXAsset.sol";
 
@@ -226,6 +227,14 @@ contract PrismXXBridge is Ownable {
         bytes32 _to,
         uint256 _value
     ) public {
+        IERC20Metadata erc20 = IERC20Metadata(_frc20);
+
+        uint8 decimal = erc20.decimals();
+
+        if(decimal > 6) {
+            require(_checkDecimal(_value, decimal - 6) == _value, "low 12 must be 0.");
+        }
+
         // Get asset type in UTXO.
         bytes32 asset = keccak256(abi.encode(ERC20_PREFIX, _frc20));
 
@@ -287,8 +296,6 @@ contract PrismXXBridge is Ownable {
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
         ac.setERC1155Info(asset, _addr, _id);
-
-        require(_checkDecimal(_amount, 12) == _amount, "low 12 must be 0.");
 
         address _from = msg.sender;
 

@@ -16,6 +16,7 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         uint256 tokenId;
         TokenType ty;
         bool isBurn;
+        uint8 decimal;
     }
 
     mapping(bytes32 => AssetInfo) public assets;
@@ -31,6 +32,10 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
 
     function setERC20Info(bytes32 _asset, address _addr) external override {
         AssetInfo storage info = assets[_asset];
+
+        IERC20Metadata erc20 = IERC20Metadata(_addr);
+
+        info.decimal = erc20.decimals();
 
         info.addr = _addr;
     }
