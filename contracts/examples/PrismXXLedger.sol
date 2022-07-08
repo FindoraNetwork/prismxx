@@ -96,7 +96,7 @@ contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
     ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
-        bytes32 at = keccak256(abi.encode(_frc20));
+        bytes32 at = keccak256(abi.encode(ERC20_PREFIX, _frc20));
 
         if (ac.isBurn(at)) {
             IERC20Mintable ct = IERC20Mintable(_frc20);
