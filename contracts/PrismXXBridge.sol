@@ -23,13 +23,9 @@ contract PrismXXBridge is Ownable {
 
     bytes32 constant FRA = bytes32(0x00);
     bytes32 constant ERC20_PREFIX =
-        bytes32(
-            0x0000000000000000000000000000000000000000000000000000000000000077
-        );
+        0x0000000000000000000000000000000000000000000000000000000000000077;
     bytes32 constant NFT_PREFIX =
-        bytes32(
-            0x0000000000000000000000000000000000000000000000000000000000000002
-        );
+        0x0000000000000000000000000000000000000000000000000000000000000002;
 
     struct MintOp {
         bytes32 asset;
@@ -59,6 +55,8 @@ contract PrismXXBridge is Ownable {
 
     event DepositFRC721(address _addr, address _from, bytes32 _to, uint256 _id);
 
+    event DepositFRC1155(address _addr, address _from, bytes32 _to, uint256 _id, uint256 amount);
+
     // Withdraw FRA
     // _from: from FRA address
     // _to: to H160 address.
@@ -82,6 +80,14 @@ contract PrismXXBridge is Ownable {
         bytes32 _from,
         address _to,
         uint256 _id
+    );
+
+    event WithdrawFRC1155(
+        address _frc20,
+        bytes32 _from,
+        address _to,
+        uint256 _id,
+        uint256 _amount
     );
 
     modifier onlySystem() {
@@ -135,6 +141,16 @@ contract PrismXXBridge is Ownable {
         uint256 a = amount / pow;
 
         return a * pow;
+    }
+
+    function _extendDecimal(uint256 amount, uint8 decimal)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 pow = 10**decimal;
+
+        return amount * pow;
     }
 
     /**
@@ -238,7 +254,7 @@ contract PrismXXBridge is Ownable {
         uint256 _id
     ) public {
         // Get asset type in UTXO.
-        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr));
+        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr, _id));
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -266,11 +282,13 @@ contract PrismXXBridge is Ownable {
         uint256 _amount
     ) public {
         // Get asset type in UTXO.
-        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr));
+        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr, _id));
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
         ac.setERC1155Info(asset, _addr, _id);
+
+        require(_checkDecimal(_amount, 12) == _amount, "low 12 must be 0.");
 
         address _from = msg.sender;
 
@@ -284,7 +302,7 @@ contract PrismXXBridge is Ownable {
         // deposit FRC20.
         lc.depositFRC1155(_addr, _from, _id, _amount);
 
-        emit DepositFRC721(_addr, _from, _to, _id);
+        emit DepositFRC1155(_addr, _from, _to, _id, _amount);
     }
 
     /**
@@ -319,20 +337,22 @@ contract PrismXXBridge is Ownable {
         } else if (ty == IPrismXXAsset.TokenType.ERC1155) {
             (address addr, uint256 id) = ac.getERC1155Info(_asset);
 
-            // TODO: Add decimal convert.
+            uint256 amount = _extendDecimal(_value, 12);
 
-            lc.withdrawFRC1155(addr, _to, id, _value, _data);
+            lc.withdrawFRC1155(addr, _to, id, amount, _data);
+
+            emit WithdrawFRC1155(addr, _from, _to, id, amount);
         } else {
             address frc20 = ac.getERC20Info(_asset);
 
             // If asset don't regist, revert.
             require(frc20 != address(0x00), "Asset type must registed");
 
-            // TODO: Add decimal convert.
+            uint256 amount = _extendDecimal(_value, 12);
 
-            lc.withdrawFRC20(frc20, _to, _value, _data);
+            lc.withdrawFRC20(frc20, _to, amount, _data);
 
-            emit WithdrawFRC20(frc20, _from, _to, _value);
+            emit WithdrawFRC20(frc20, _from, _to, amount);
         }
     }
 
