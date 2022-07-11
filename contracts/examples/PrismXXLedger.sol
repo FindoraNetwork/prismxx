@@ -154,6 +154,6 @@ contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
     ) external override onlyBridge {
         IERC1155 ct = IERC1155(_addr);
 
-        ct.safeTransferFrom(_target, address(this), _id, _amount, _data);
+        ct.safeTransferFrom(address(this), _target, _id, _amount, _data);
     }
 }
