@@ -176,6 +176,8 @@ contract PrismXXBridge is Ownable {
 
         ops.push(op);
 
+        Address.sendValue(payable(proxy_contract), amount);
+
         emit DepositFRA(msg.sender, _to, amount);
     }
 
