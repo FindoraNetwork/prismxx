@@ -13,14 +13,16 @@ import "../interfaces/IPrismXXLedger.sol";
 import "../interfaces/IERC20Mintable.sol";
 import "../interfaces/IERC20Burnable.sol";
 import "./PrismXXAsset.sol";
+import "../AssetTypeUtils.sol";
 
-contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
+contract PrismXXLedger is
+    Ownable,
+    IPrismXXLedger,
+    ERC721Holder,
+    ERC1155Holder,
+    AssetTypeUtils
+{
     using SafeERC20 for IERC20;
-
-    bytes32 constant ERC20_PREFIX =
-        bytes32(
-            0x0000000000000000000000000000000000000000000000000000000000000077
-        );
 
     address public bridge;
     address public asset;
@@ -69,7 +71,7 @@ contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
     ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
-        bytes32 at = keccak256(abi.encode(ERC20_PREFIX, _frc20));
+        bytes32 at = computeERC20AssetType(_frc20);
 
         if (ac.isBurn(at)) {
             IERC20Burnable ct = IERC20Burnable(_frc20);
@@ -96,7 +98,7 @@ contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
     ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
-        bytes32 at = keccak256(abi.encode(ERC20_PREFIX, _frc20));
+        bytes32 at = computeERC20AssetType(_frc20);
 
         if (ac.isBurn(at)) {
             IERC20Mintable ct = IERC20Mintable(_frc20);
