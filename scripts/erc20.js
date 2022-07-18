@@ -28,6 +28,10 @@ async function main() {
     let bridge = await Bridge.attach(bridge_address);
 
     await bridge.depositFRC20(gld.address, receiver, 1000000);
+
+    let amount = await gld.balanceOf(ledger_address);
+
+    console.log(amount);
 }
 
 main()

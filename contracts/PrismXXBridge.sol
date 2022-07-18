@@ -239,11 +239,15 @@ contract PrismXXBridge is Ownable {
 
         uint8 decimal = erc20.decimals();
 
+        uint8 target_decimal = decimal;
+
         if (decimal > 6) {
             require(
                 _checkDecimal(_value, decimal - 6) == _value,
                 "low 12 must be 0."
             );
+
+            target_decimal = 6;
         }
 
         // Get asset type in UTXO.
@@ -256,7 +260,7 @@ contract PrismXXBridge is Ownable {
         address _from = msg.sender;
 
         // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, _value, 6, 0);
+        MintOp memory op = MintOp(asset, _to, _value, target_decimal, 0);
 
         ops.push(op);
 
@@ -355,18 +359,24 @@ contract PrismXXBridge is Ownable {
         } else if (ty == IPrismXXAsset.TokenType.ERC1155) {
             (address addr, uint256 id) = ac.getERC1155Info(_asset);
 
-            uint256 amount = _extendDecimal(_value, 12);
+            lc.withdrawFRC1155(addr, _to, id, _value, _data);
 
-            lc.withdrawFRC1155(addr, _to, id, amount, _data);
-
-            emit WithdrawFRC1155(addr, _from, _to, id, amount);
+            emit WithdrawFRC1155(addr, _from, _to, id, _value);
         } else {
             address frc20 = ac.getERC20Info(_asset);
+
+            IERC20Metadata erc20 = IERC20Metadata(frc20);
 
             // If asset don't regist, revert.
             require(frc20 != address(0x00), "Asset type must registed");
 
-            uint256 amount = _extendDecimal(_value, 12);
+            uint8 decimal = erc20.decimals();
+
+            uint256 amount = _value;
+
+            if (decimal > 6) {
+                amount = _extendDecimal(_value, decimal - 6);
+            }
 
             lc.withdrawFRC20(frc20, _to, amount, _data);
 

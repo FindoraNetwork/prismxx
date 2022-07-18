@@ -24,7 +24,8 @@ async function main() {
 
     await mtk.mint("0x72488bAa718F52B76118C79168E55c209056A2E6", 0, 100, "0x");
 
-    await mtk.setApprovalForAll(ledger_address, trutrue   const Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
+    await mtk.setApprovalForAll(ledger_address, true);
+    const Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
     let bridge = await Bridge.attach(bridge_address);
 
     await bridge.depositFRC1155(mtk.address, receiver, 0, 100);
