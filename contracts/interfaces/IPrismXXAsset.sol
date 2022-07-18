@@ -2,19 +2,39 @@
 pragma solidity ^0.8.4;
 
 interface IPrismXXAsset {
-    function getAssetByAddress(address _frc20) external view returns (bytes32);
+    function getERC20Info(bytes32 _asset) external view returns (address);
 
-    function getAddressByAsset(bytes32 _asset) external view returns (address);
+    function setERC20Info(bytes32 _asset, address _addr) external;
 
-    function depositDecimal(address _frc20, uint256 amount)
+    function getERC721Info(bytes32 _asset)
         external
         view
-        returns (uint256);
+        returns (address, uint256);
 
-    function withdrawDecimal(address _frc20, uint256 amount)
+    function setERC721Info(
+        bytes32 _asset,
+        address _addr,
+        uint256 tokenId
+    ) external;
+
+    function getERC1155Info(bytes32 _asset)
         external
         view
-        returns (uint256);
+        returns (address, uint256);
 
-    // function checkDecimal(address _frc20, uint256 amount) external view returns(uint256);
+    function setERC1155Info(
+        bytes32 _asset,
+        address _addr,
+        uint256 tokenId
+    ) external;
+
+    function isBurn(bytes32 _asset) external view returns (bool);
+
+    enum TokenType {
+        ERC20,
+        ERC721,
+        ERC1155
+    }
+
+    function getTokenType(bytes32 _asset) external view returns (TokenType);
 }

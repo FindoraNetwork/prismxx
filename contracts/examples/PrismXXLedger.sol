@@ -5,19 +5,23 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "../interfaces/IPrismXXLedger.sol";
 import "../interfaces/IERC20Mintable.sol";
 import "../interfaces/IERC20Burnable.sol";
-import "../interfaces/IPrismXXLedger.sol";
 import "./PrismXXAsset.sol";
 
-/**
- * @dev prism ledger contract
- */
-contract PrismXXLedger is Ownable, IPrismXXLedger {
+contract PrismXXLedger is Ownable, IPrismXXLedger, ERC721Holder, ERC1155Holder {
     using SafeERC20 for IERC20;
 
-    // Note, in here, Owner is bridge.
+    bytes32 constant ERC20_PREFIX =
+        bytes32(
+            0x0000000000000000000000000000000000000000000000000000000000000077
+        );
+
     address public bridge;
     address public asset;
 
@@ -65,15 +69,20 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
     ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
-        bool isBurn = ac.isBurn(_frc20);
-        if (isBurn) {
-            _burnERC20(_frc20, _target, _amount);
+        bytes32 at = keccak256(abi.encode(ERC20_PREFIX, _frc20));
+
+        if (ac.isBurn(at)) {
+            IERC20Burnable ct = IERC20Burnable(_frc20);
+
+            ct.burnFrom(_target, _amount);
         } else {
-            _lockERC20(_frc20, _target, _amount);
+            IERC20 ct = IERC20(_frc20);
+
+            ct.safeTransferFrom(_target, address(this), _amount);
         }
     }
 
-     /**
+    /**
      * @dev withdraw FRC20 token, this function can only be called by Bridge.
      * @param _frc20 contract address of token.
      * @param _target receive address.
@@ -87,11 +96,16 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
     ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
-        bool isBurn = ac.isBurn(_frc20);
-        if (isBurn) {
-            _mintERC20(_frc20, _target, _amount);
+        bytes32 at = keccak256(abi.encode(ERC20_PREFIX, _frc20));
+
+        if (ac.isBurn(at)) {
+            IERC20Mintable ct = IERC20Mintable(_frc20);
+
+            ct.mint(_target, _amount);
         } else {
-            _releaseERC20(_frc20, _target, _amount);
+            IERC20 ct = IERC20(_frc20);
+
+            ct.safeTransfer(_target, _amount);
         }
 
         if (Address.isContract(_target)) {
@@ -99,67 +113,47 @@ contract PrismXXLedger is Ownable, IPrismXXLedger {
         }
     }
 
-    /**
-     * @dev Transfer the amount from the owner address to the contract.
-     * @param frc20 contract address of token.
-     * @param owner user address.
-     * @param value amount to be transferred.
-     */
-    function _lockERC20(
-        address frc20,
-        address owner,
-        uint256 value
-    ) private {
-        IERC20 ct = IERC20(frc20);
+    function depositFRC721(
+        address _frc721,
+        address _target,
+        uint256 tokenId
+    ) external override onlyBridge {
+        IERC721 ct = IERC721(_frc721);
 
-        ct.safeTransferFrom(owner, address(this), value);
+        ct.safeTransferFrom(_target, address(this), tokenId);
     }
 
-    /**
-     * @dev Transfer the amount from the contract to owner.
-     * @param frc20 contract address of token.
-     * @param owner user address.
-     * @param value amount to be transferred.
-     */
-    function _releaseERC20(
-        address frc20,
-        address owner,
-        uint256 value
-    ) private {
-        IERC20 ct = IERC20(frc20);
+    function withdrawFRC721(
+        address _addr,
+        address _target,
+        uint256 _id,
+        bytes calldata _data
+    ) external override onlyBridge {
+        IERC721 ct = IERC721(_addr);
 
-        ct.safeTransfer(owner, value);
+        ct.safeTransferFrom(address(this), _target, _id, _data);
     }
 
-    /**
-     * @dev Mint the token to owner.
-     * @param _frc20 contract address of token.
-     * @param _owner user address.
-     * @param _amount amount to be mint.
-     */
-    function _mintERC20(
-        address _frc20,
-        address _owner,
+    function depositFRC1155(
+        address _addr,
+        address _target,
+        uint256 _id,
         uint256 _amount
-    ) private {
-        IERC20Mintable ct = IERC20Mintable(_frc20);
+    ) external override onlyBridge {
+        IERC1155 ct = IERC1155(_addr);
 
-        ct.mint(_owner, _amount);
+        ct.safeTransferFrom(_target, address(this), _id, _amount, "");
     }
 
-    /**
-     * @dev Burn the token from owner.
-     * @param _frc20 contract address of token.
-     * @param _owner user address.
-     * @param _amount amount to be burn.
-     */
-    function _burnERC20(
-        address _frc20,
-        address _owner,
-        uint256 _amount
-    ) private {
-        IERC20Burnable ct = IERC20Burnable(_frc20);
+    function withdrawFRC1155(
+        address _addr,
+        address _target,
+        uint256 _id,
+        uint256 _amount,
+        bytes calldata _data
+    ) external override onlyBridge {
+        IERC1155 ct = IERC1155(_addr);
 
-        ct.burnFrom(_owner, _amount);
+        ct.safeTransferFrom(address(this), _target, _id, _amount, _data);
     }
 }

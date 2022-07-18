@@ -12,142 +12,109 @@ import "../interfaces/IPrismXXAsset.sol";
 contract PrismXXAsset is Ownable, IPrismXXAsset {
     // status information for the asset
     struct AssetInfo {
-        bytes32 asset;
+        address addr;
+        uint256 tokenId;
+        TokenType ty;
         bool isBurn;
         uint8 decimal;
     }
 
-    mapping(address => AssetInfo) public assetInfos;   // token info
-    mapping(bytes32 => address) public assetToAddress; // mapping asset to token address
+    address public bridge;
 
-    /**
-     * @dev Add asset information, this function can only be called by owner.
-     * @param _frc20 the address of the token.
-     * @param _asset the encoded ID of the asset.
-     * @param _isBurn whether the token can be mint.
-     * @param _decimal decimal of token.
-     */
-    function adminSetAssetMaping(
-        address _frc20,
-        bytes32 _asset,
-        bool _isBurn,
-        uint8 _decimal
-    ) public onlyOwner {
-        AssetInfo memory info = AssetInfo(_asset, _isBurn, _decimal);
+    mapping(bytes32 => AssetInfo) public assets;
 
-        assetInfos[_frc20] = info;
-        assetToAddress[_asset] = _frc20;
+    modifier onlyBridge() {
+        require(msg.sender == bridge);
+        _;
     }
 
-    /**
-     * @dev Delete asset information, this function can only be called by owner.
-     * @param _frc20 the address of the token.
-     */
-    function adminResetAssetMappingByAddress(address _frc20) public onlyOwner {
-        bytes32 asset = assetInfos[_frc20].asset;
-
-        delete assetInfos[_frc20];
-        delete assetToAddress[asset];
+    constructor(address _bridge) {
+        bridge = _bridge;
     }
 
-    /**
-     * @dev Get asset by token address.
-     * @param _frc20 the address of the token.
-     * @return asset data.
-     */
-    function getAssetByAddress(address _frc20)
-        external
-        view
-        override
-        returns (bytes32)
-    {
-        return assetInfos[_frc20].asset;
-    }
-
-    /**
-     * @dev Get token address by asset.
-     * @param _asset the encoded ID of the asset
-     * @return token address.
-     */
-    function getAddressByAsset(bytes32 _asset)
+    function getERC20Info(bytes32 _asset)
         external
         view
         override
         returns (address)
     {
-        return assetToAddress[_asset];
+        return assets[_asset].addr;
     }
 
-    /**
-     * @dev Converte deposit decimal, the decimal of the token and decimal of the asset may be different.
-     * @param _frc20 the address of token
-     * @param amount amount for deposit.
-     * @return formatted amount.
-     */
-    function depositDecimal(address _frc20, uint256 amount)
+    function setERC20Info(bytes32 _asset, address _addr)
+        external
+        override
+        onlyBridge
+    {
+        AssetInfo storage info = assets[_asset];
+
+        IERC20Metadata erc20 = IERC20Metadata(_addr);
+
+        info.decimal = erc20.decimals();
+
+        info.addr = _addr;
+    }
+
+    function getERC721Info(bytes32 _asset)
         external
         view
         override
-        returns (uint256)
+        returns (address, uint256)
     {
-        IERC20Metadata mc = IERC20Metadata(_frc20);
+        AssetInfo storage info = assets[_asset];
 
-        uint8 assetDecimal = assetInfos[_frc20].decimal;
-        uint8 frc20Decimal = mc.decimals();
-
-        if (frc20Decimal > assetDecimal) {
-            uint8 diff = frc20Decimal - assetDecimal;
-            uint256 res = amount / (10**diff);
-
-            require(res * (10**diff) == amount, "Low digital must be 0.");
-
-            return res;
-        } else if (assetDecimal > frc20Decimal) {
-            uint8 diff = assetDecimal - frc20Decimal;
-
-            return amount * (10**diff);
-        }
-        return amount;
+        return (info.addr, info.tokenId);
     }
 
-    /**
-     * @dev Converte withdraw decimal, the decimal of the token and decimal of the asset may be different.
-     * @param _frc20 the address of token
-     * @param amount amount for withdraw.
-     * @return formatted amount.
-     */
-    function withdrawDecimal(address _frc20, uint256 amount)
+    function setERC721Info(
+        bytes32 _asset,
+        address _addr,
+        uint256 tokenId
+    ) external override onlyBridge {
+        AssetInfo storage info = assets[_asset];
+
+        info.addr = _addr;
+        info.tokenId = tokenId;
+        info.ty = TokenType.ERC721;
+    }
+
+    function getERC1155Info(bytes32 _asset)
         external
         view
         override
-        returns (uint256)
+        returns (address, uint256)
     {
-        IERC20Metadata mc = IERC20Metadata(_frc20);
+        AssetInfo storage info = assets[_asset];
 
-        uint8 assetDecimal = assetInfos[_frc20].decimal;
-        uint8 frc20Decimal = mc.decimals();
-
-        if (assetDecimal > frc20Decimal) {
-            uint8 diff = assetDecimal - frc20Decimal;
-            uint256 res = amount / (10**diff);
-
-            require(res * (10**diff) == amount, "Low digital must be 0.");
-
-            return res;
-        } else if (frc20Decimal > assetDecimal) {
-            uint8 diff = frc20Decimal - assetDecimal;
-
-            return amount * (10**diff);
-        }
-        return amount;
+        return (info.addr, info.tokenId);
     }
 
-    /**
-     * @dev Get whether this asset can be burn.
-     * @param _frc20 the address of the token.
-     * @return return true if the asset can be burn, otherwise return false.
-     */
-    function isBurn(address _frc20) public view returns (bool) {
-        return assetInfos[_frc20].isBurn;
+    function setERC1155Info(
+        bytes32 _asset,
+        address _addr,
+        uint256 tokenId
+    ) external override onlyBridge {
+        AssetInfo storage info = assets[_asset];
+
+        info.addr = _addr;
+        info.tokenId = tokenId;
+        info.ty = TokenType.ERC1155;
+    }
+
+    function setBurn(bytes32 _asset) external onlyOwner {
+        assets[_asset].isBurn = true;
+    }
+
+    function isBurn(bytes32 _asset) external view override returns (bool) {
+        return assets[_asset].isBurn;
+    }
+
+    function getTokenType(bytes32 _asset)
+        external
+        view
+        override
+        returns (TokenType)
+    {
+        return assets[_asset].ty;
     }
 }

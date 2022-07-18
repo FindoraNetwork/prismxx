@@ -3,9 +3,9 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-
-import "./interfaces/IPrismXXAsset.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interfaces/IPrismXXLedger.sol";
+import "./interfaces/IPrismXXAsset.sol";
 
 /**
  * @dev prismXXBridge cross-chain bridge contract.
@@ -16,18 +16,24 @@ contract PrismXXBridge is Ownable {
 
     address private __self = address(this);
 
-    address public proxy_contract;  // address of proxy contract
+    address public proxy_contract; // address of proxy contract
     address public ledger_contract; // address of ledger contract
-    address public asset_contract;  // address of asset contract
+    address public asset_contract; // address of asset contract
 
     MintOp[] public ops;
 
     bytes32 constant FRA = bytes32(0x00);
+    bytes32 constant ERC20_PREFIX =
+        0x0000000000000000000000000000000000000000000000000000000000000077;
+    bytes32 constant NFT_PREFIX =
+        0x0000000000000000000000000000000000000000000000000000000000000002;
 
     struct MintOp {
         bytes32 asset;
         bytes32 receiver;
         uint256 amount;
+        uint8 decimal;
+        uint256 max_supply;
     }
 
     // Deposit FRA
@@ -48,6 +54,16 @@ contract PrismXXBridge is Ownable {
         uint256 _amount
     );
 
+    event DepositFRC721(address _addr, address _from, bytes32 _to, uint256 _id);
+
+    event DepositFRC1155(
+        address _addr,
+        address _from,
+        bytes32 _to,
+        uint256 _id,
+        uint256 amount
+    );
+
     // Withdraw FRA
     // _from: from FRA address
     // _to: to H160 address.
@@ -63,6 +79,21 @@ contract PrismXXBridge is Ownable {
         address _frc20,
         bytes32 _from,
         address _to,
+        uint256 _amount
+    );
+
+    event WithdrawFRC721(
+        address _frc20,
+        bytes32 _from,
+        address _to,
+        uint256 _id
+    );
+
+    event WithdrawFRC1155(
+        address _frc20,
+        bytes32 _from,
+        address _to,
+        uint256 _id,
         uint256 _amount
     );
 
@@ -119,6 +150,15 @@ contract PrismXXBridge is Ownable {
         return a * pow;
     }
 
+    function _extendDecimal(uint256 amount, uint8 decimal)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 pow = 10**decimal;
+
+        return amount * pow;
+    }
 
     /**
      * @dev deposit FRA token, this function called by user.
@@ -132,9 +172,11 @@ contract PrismXXBridge is Ownable {
 
         require(_checkDecimal(amount, 12) == amount, "low 12 must be 0.");
 
-        MintOp memory op = MintOp(FRA, _to, amount);
+        MintOp memory op = MintOp(FRA, _to, amount, 6, 0);
 
         ops.push(op);
+
+        Address.sendValue(payable(proxy_contract), amount);
 
         emit DepositFRA(msg.sender, _to, amount);
     }
@@ -155,8 +197,6 @@ contract PrismXXBridge is Ownable {
         uint256 _value,
         bytes calldata _data
     ) public onlySystem {
-        // Decimal mapping for FRA.
-
         Address.sendValue(payable(__self), _value);
 
         PrismXXBridge bridge = PrismXXBridge(payable(__self));
@@ -195,20 +235,28 @@ contract PrismXXBridge is Ownable {
         bytes32 _to,
         uint256 _value
     ) public {
-        IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+        IERC20Metadata erc20 = IERC20Metadata(_frc20);
+
+        uint8 decimal = erc20.decimals();
+
+        if (decimal > 6) {
+            require(
+                _checkDecimal(_value, decimal - 6) == _value,
+                "low 12 must be 0."
+            );
+        }
 
         // Get asset type in UTXO.
-        bytes32 asset = ac.getAssetByAddress(_frc20);
+        bytes32 asset = keccak256(abi.encode(ERC20_PREFIX, _frc20));
 
-        // If asset don't regist, revert.
-        require(asset != 0x00, "Asset type must registed");
+        IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        ac.setERC20Info(asset, _frc20);
 
         address _from = msg.sender;
 
-        uint256 amount = ac.depositDecimal(_frc20, _value);
-
         // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, amount);
+        MintOp memory op = MintOp(asset, _to, _value, 6, 0);
 
         ops.push(op);
 
@@ -220,6 +268,61 @@ contract PrismXXBridge is Ownable {
         emit DepositFRC20(_frc20, _from, _to, _value);
     }
 
+    function depositFRC721(
+        address _addr,
+        bytes32 _to,
+        uint256 _id
+    ) public {
+        // Get asset type in UTXO.
+        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr, _id));
+
+        IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        ac.setERC721Info(asset, _addr, _id);
+
+        address _from = msg.sender;
+
+        // Build mintop for coinbase.
+        MintOp memory op = MintOp(asset, _to, 1, 1, 1);
+
+        ops.push(op);
+
+        IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
+
+        // deposit FRC20.
+        lc.depositFRC721(_addr, _from, _id);
+
+        emit DepositFRC721(_addr, _from, _to, _id);
+    }
+
+    function depositFRC1155(
+        address _addr,
+        bytes32 _to,
+        uint256 _id,
+        uint256 _amount
+    ) public {
+        // Get asset type in UTXO.
+        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr, _id));
+
+        IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        ac.setERC1155Info(asset, _addr, _id);
+
+        address _from = msg.sender;
+
+        // Build mintop for coinbase.
+        MintOp memory op = MintOp(asset, _to, _amount, 1, 0);
+
+        ops.push(op);
+
+        IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
+
+        // deposit FRC20.
+        lc.depositFRC1155(_addr, _from, _id, _amount);
+
+        emit DepositFRC1155(_addr, _from, _to, _id, _amount);
+    }
+
     /**
      * @dev withdraw FRC20 token, this function can only be called by proxy.
      * @notice this funtion don't cost gas.
@@ -229,7 +332,7 @@ contract PrismXXBridge is Ownable {
      * @param _value amount of funds transferred.
      * @param _data additional data when transferring funds.
      */
-    function _withdrawFRC20(
+    function _withdrawAsset(
         bytes32 _asset,
         bytes32 _from,
         address _to,
@@ -239,16 +342,36 @@ contract PrismXXBridge is Ownable {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
-        address frc20 = ac.getAddressByAsset(_asset);
+        IPrismXXAsset.TokenType ty = ac.getTokenType(_asset);
 
-        // If asset don't regist, revert.
-        require(frc20 != address(0x00), "Asset type must registed");
+        if (ty == IPrismXXAsset.TokenType.ERC721) {
+            (address addr, uint256 id) = ac.getERC721Info(_asset);
 
-        uint256 amount = ac.withdrawDecimal(frc20, _value);
+            require(_value == 1, "Error: Asset type is not ERC721");
 
-        lc.withdrawFRC20(frc20, _to, amount, _data);
+            lc.withdrawFRC721(addr, _to, id, _data);
 
-        emit WithdrawFRC20(frc20, _from, _to, amount);
+            emit WithdrawFRC721(addr, _from, _to, id);
+        } else if (ty == IPrismXXAsset.TokenType.ERC1155) {
+            (address addr, uint256 id) = ac.getERC1155Info(_asset);
+
+            uint256 amount = _extendDecimal(_value, 12);
+
+            lc.withdrawFRC1155(addr, _to, id, amount, _data);
+
+            emit WithdrawFRC1155(addr, _from, _to, id, amount);
+        } else {
+            address frc20 = ac.getERC20Info(_asset);
+
+            // If asset don't regist, revert.
+            require(frc20 != address(0x00), "Asset type must registed");
+
+            uint256 amount = _extendDecimal(_value, 12);
+
+            lc.withdrawFRC20(frc20, _to, amount, _data);
+
+            emit WithdrawFRC20(frc20, _from, _to, amount);
+        }
     }
 
     /**
@@ -259,7 +382,7 @@ contract PrismXXBridge is Ownable {
      * @param _value amount of funds transferred.
      * @param _data additional data when transferring funds.
      */
-    function withdrawFRC20(
+    function withdrawAsset(
         bytes32 _asset,
         bytes32 _from,
         address _to,
@@ -268,7 +391,7 @@ contract PrismXXBridge is Ownable {
     ) public onlySystem {
         PrismXXBridge bridge = PrismXXBridge(payable(__self));
 
-        bridge._withdrawFRC20(_asset, _from, _to, _value, _data);
+        bridge._withdrawAsset(_asset, _from, _to, _value, _data);
     }
 
     /**
