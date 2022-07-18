@@ -19,7 +19,18 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         uint8 decimal;
     }
 
+    address public bridge;
+
     mapping(bytes32 => AssetInfo) public assets;
+
+    modifier onlyBridge() {
+        require(msg.sender == bridge);
+        _;
+    }
+
+    constructor(address _bridge) {
+        bridge = _bridge;
+    }
 
     function getERC20Info(bytes32 _asset)
         external
@@ -30,7 +41,11 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         return assets[_asset].addr;
     }
 
-    function setERC20Info(bytes32 _asset, address _addr) external override {
+    function setERC20Info(bytes32 _asset, address _addr)
+        external
+        override
+        onlyBridge
+    {
         AssetInfo storage info = assets[_asset];
 
         IERC20Metadata erc20 = IERC20Metadata(_addr);
@@ -55,7 +70,7 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         bytes32 _asset,
         address _addr,
         uint256 tokenId
-    ) external override {
+    ) external override onlyBridge {
         AssetInfo storage info = assets[_asset];
 
         info.addr = _addr;
@@ -78,7 +93,7 @@ contract PrismXXAsset is Ownable, IPrismXXAsset {
         bytes32 _asset,
         address _addr,
         uint256 tokenId
-    ) external override {
+    ) external override onlyBridge {
         AssetInfo storage info = assets[_asset];
 
         info.addr = _addr;

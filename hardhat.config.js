@@ -9,7 +9,7 @@ module.exports = {
         hardhat: {},
         localhost: {
             url: "http://localhost:8545",
-            accounts: ["0x975dbe2d0c9b60c108375732fcbf8bef0c6670bae9dfb6334ddc615433bf5448"]
+            accounts: ["0x4d05b965f821ea900ddd995dfa1b6caa834eaaa1ebe100a9760baf9331aae567"]
         }
     }
 };

@@ -1,20 +1,60 @@
 const hre = require("hardhat");
 
+async function deploy_asset(bridge) {
+    const Asset = await hre.ethers.getContractFactory("PrismXXAsset");
+
+    const asset = await Asset.deploy(bridge.address);
+
+    await asset.deployed();
+
+    console.log("asset address is:", asset.address);
+
+    let receipt = await bridge.adminSetAsset(asset.address);
+
+    return asset;
+}
+
+async function redeploy_bridge(proxy_address) {
+    let Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
+
+    let bridge = await Bridge.deploy(proxy_address);
+
+    await bridge.deployed();
+
+    console.log("Bridge address is:", bridge.address);
+
+    let factory_proxy = await hre.ethers.getContractFactory("PrismProxy");
+
+    let proxy = await factory_proxy.attach(proxy_address);
+
+    console.log("Owner of proxy is :", await proxy.owner());
+    
+    await proxy.adminSetPrismBridgeAddress(bridge.address);
+
+    return bridge;
+}
+
+async function deploy_ledger(bridge, asset) {
+    let Ledger = await hre.ethers.getContractFactory("PrismXXLedger");
+
+    let ledger = await Ledger.deploy(bridge.address, asset);
+
+    await ledger.deployed();
+
+    console.log("ledegr address is:", ledger.address);
+
+    let receipt = await bridge.adminSetLedger(ledger.address);
+
+    return ledger;
+}
+
 async function main() {
-    const factory_proxy = await hre.ethers.getContractFactory("PrismProxy");
+    let bridge = await redeploy_bridge("0xc8fa18086db6846aa4a330e88698357142262256");
+    
+    let asset = await deploy_asset(bridge);
 
-    const proxy = await factory_proxy.attach("0x582a66c15108a417b80df3bf40fabd1a9f460621");
+    let ledger = await deploy_ledger(bridge, asset.address);
 
-    const addr = await proxy.prismBridgeAddress();
-
-    const factory = await hre.ethers.getContractFactory("PrismXXBridge");
-    const bridge = await factory.attach(addr);
-
-    const value = hre.ethers.utils.parseEther("1");
-
-    let receipt = await bridge.depositFRA("0x982c2f5688c687862aeb1b19521324554eab3abd70e4284dd598ec1297e676aa", { value });
-
-    console.log(receipt);
 }
 
 main()
