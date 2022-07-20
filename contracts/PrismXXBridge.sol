@@ -6,11 +6,12 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interfaces/IPrismXXLedger.sol";
 import "./interfaces/IPrismXXAsset.sol";
+import "./AssetTypeUtils.sol";
 
 /**
  * @dev prismXXBridge cross-chain bridge contract.
  */
-contract PrismXXBridge is Ownable {
+contract PrismXXBridge is Ownable, AssetTypeUtils {
     using Address for address;
     // Note, in here, Owner is system.
 
@@ -23,10 +24,6 @@ contract PrismXXBridge is Ownable {
     MintOp[] public ops;
 
     bytes32 constant FRA = bytes32(0x00);
-    bytes32 constant ERC20_PREFIX =
-        0x0000000000000000000000000000000000000000000000000000000000000077;
-    bytes32 constant NFT_PREFIX =
-        0x0000000000000000000000000000000000000000000000000000000000000002;
 
     struct MintOp {
         bytes32 asset;
@@ -250,8 +247,7 @@ contract PrismXXBridge is Ownable {
             target_decimal = 6;
         }
 
-        // Get asset type in UTXO.
-        bytes32 asset = keccak256(abi.encode(ERC20_PREFIX, _frc20));
+        bytes32 asset = computeERC20AssetType(_frc20);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -277,8 +273,7 @@ contract PrismXXBridge is Ownable {
         bytes32 _to,
         uint256 _id
     ) public {
-        // Get asset type in UTXO.
-        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr, _id));
+        bytes32 asset = computeNFTAssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -305,8 +300,7 @@ contract PrismXXBridge is Ownable {
         uint256 _id,
         uint256 _amount
     ) public {
-        // Get asset type in UTXO.
-        bytes32 asset = keccak256(abi.encode(NFT_PREFIX, _addr, _id));
+        bytes32 asset = computeNFTAssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
