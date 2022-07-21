@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-contract ProxyContract is Initializable {
-    string public contract_name;
-
-    function initialize(string memory _contract_name) public initializer {
-        contract_name = _contract_name;
-    }
+contract PrismXXProxy is TransparentUpgradeableProxy {
+    constructor(
+        address _logic,
+        address _admin,
+        bytes memory _data
+    ) TransparentUpgradeableProxy(_logic, _admin, _data) {}
 }
