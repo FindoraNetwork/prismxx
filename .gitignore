@@ -32,3 +32,4 @@ artifacts
 **/Cargo.lock
 .idea/
 ./contracts/demo/
+demo/
