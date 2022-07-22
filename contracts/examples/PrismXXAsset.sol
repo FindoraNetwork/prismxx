@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-//import "@openzeppelin/contracts/access/Ownable.sol";
+import "../interfaces/IPrismXXAsset.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
-import "../interfaces/IPrismXXAsset.sol";
 
 /**
  * @dev prism asset manager contract
@@ -31,12 +28,9 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         _;
     }
 
-    //    constructor(address _bridge) {
-    //        bridge = _bridge;
-    //    }
-    function initialize(address _bridge) public initializer {
-        bridge = _bridge;
-        __Ownable_init();
+    function initialize() public initializer {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
     }
 
     function getERC20Info(bytes32 _asset)

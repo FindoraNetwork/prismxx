@@ -28,39 +28,78 @@ async function redeploy_bridge(proxy_address) {
     let proxy = await factory_proxy.attach(proxy_address);
 
     console.log("Owner of proxy is :", await proxy.owner());
-    
+
     await proxy.adminSetPrismBridgeAddress(bridge.address);
 
     return bridge;
 }
 
-async function deploy_ledger(bridge, asset) {
+// async function deploy_ledger(bridge, asset) {
+//     let Ledger = await hre.ethers.getContractFactory("PrismXXLedger");
+//
+//     let ledger = await Ledger.deploy(bridge.address, asset);
+//
+//     await ledger.deployed();
+//
+//     console.log("ledegr address is:", ledger.address);
+//
+//     let receipt = await bridge.adminSetLedger(ledger.address);
+//
+//     return ledger;
+// }
+
+async function deploy_ledger() {
     let Ledger = await hre.ethers.getContractFactory("PrismXXLedger");
 
-    let ledger = await Ledger.deploy(bridge.address, asset);
+    let ledger = await Ledger.deploy();
 
     await ledger.deployed();
 
-    console.log("ledegr address is:", ledger.address);
+    console.log("ledger address is:", ledger.address);
 
-    let receipt = await bridge.adminSetLedger(ledger.address);
+    return ledger.address;
+}
 
-    return ledger;
+async function deploy_proxy_admin() {
+    let ProxyAdmin = await hre.ethers.getContractFactory("PrismXXProxyAdmin");
+
+    let proxyAdmin = await ProxyAdmin.deploy();
+
+    await proxyAdmin.deployed();
+
+    console.log("PrismXXProxyAdmin address is:", proxyAdmin.address);
+
+    return proxyAdmin.address;
+}
+
+async function deploy_proxy() {
+
+    let ledger_address = await deploy_ledger();
+    let proxy_admin_address = await deploy_proxy_admin();
+    let PrismXXProxy = await hre.ethers.getContractFactory("PrismXXProxy");
+
+    let proxy = await PrismXXProxy.deploy(ledger_address,proxy_admin_address,"0x8129fc1c");
+
+    await proxy.deployed();
+
+    console.log("PrismXXProxy address is:", proxy.address);
+
+    return proxy.address;
 }
 
 async function main() {
     let bridge = await redeploy_bridge("0xc8fa18086db6846aa4a330e88698357142262256");
-    
+
     let asset = await deploy_asset(bridge);
 
-    let ledger = await deploy_ledger(bridge, asset.address);
+    let ledger = await deploy_proxy();
 
 }
 
 main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error(error);
+        process.exit(1);
+    });
 
