@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 /**
  * @dev columbusProxy proxy contract that can be upgrade
  */
-contract ColumbusProxy is TransparentUpgradeableProxy {
+contract PrismXXProxy is TransparentUpgradeableProxy {
     address public proxyAdmin;
 
     constructor(
