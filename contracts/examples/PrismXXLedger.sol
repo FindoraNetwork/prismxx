@@ -34,7 +34,9 @@ contract PrismXXLedger is
         _;
     }
 
-    function initialize() public initializer {
+    function initialize(address _bridge, address _asset) public initializer {
+        bridge = _bridge;
+        asset = _asset;
         __Context_init_unchained();
         __Ownable_init_unchained();
     }
