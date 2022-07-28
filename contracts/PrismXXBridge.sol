@@ -147,7 +147,11 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         return a * pow;
     }
 
-    function _shrinkDecimal(uint256 amount, uint8 decimal) private pure returns(uint256) {
+    function _shrinkDecimal(uint256 amount, uint8 decimal)
+        private
+        pure
+        returns (uint256)
+    {
         uint256 pow = 10**decimal;
 
         uint256 a = amount / pow;
@@ -246,7 +250,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
         uint8 target_decimal = decimal;
 
-        uint256 value = 0;
+        uint256 value = _value;
 
         if (decimal > 6) {
             require(
