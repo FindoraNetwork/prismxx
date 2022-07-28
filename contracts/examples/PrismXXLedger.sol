@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -16,7 +17,8 @@ import "./PrismXXAsset.sol";
 import "../AssetTypeUtils.sol";
 
 contract PrismXXLedger is
-    Ownable,
+    Initializable,
+    OwnableUpgradeable,
     IPrismXXLedger,
     ERC721Holder,
     ERC1155Holder,
@@ -32,14 +34,11 @@ contract PrismXXLedger is
         _;
     }
 
-    /**
-     * @dev constructor function, for init bridge and asset.
-     * @param _bridge contract address of bridge
-     * @param _asset contract address of token
-     */
-    constructor(address _bridge, address _asset) {
+    function initialize(address _bridge, address _asset) public initializer {
         bridge = _bridge;
         asset = _asset;
+        __Context_init_unchained();
+        __Ownable_init_unchained();
     }
 
     /**
