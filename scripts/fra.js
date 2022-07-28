@@ -4,7 +4,7 @@ async function main() {
     const factory_proxy = await hre.ethers.getContractFactory("PrismProxy");
 
     const factory = await hre.ethers.getContractFactory("PrismXXBridge");
-    const bridge = await factory.attach("0x2B7835AE05C9Cb5EF086e3BFe249e2658b450E8d");
+    const bridge = await factory.attach("0x899d4d8f441E5B59EB21ceb58fce723bb5A85C55");
 
     const value = hre.ethers.utils.parseEther("1");
 

@@ -49,7 +49,7 @@ async function deploy_ledger(bridge, asset) {
 }
 
 async function main() {
-    let bridge = await redeploy_bridge("0xc8fa18086db6846aa4a330e88698357142262256");
+    let bridge = await redeploy_bridge("0x0bafe641dbca0ef19eda10346d56fcd08032d35f");
     
     let asset = await deploy_asset(bridge);
 
