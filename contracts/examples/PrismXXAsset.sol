@@ -34,7 +34,7 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         __Ownable_init_unchained();
     }
 
-    function adminSetBridge(address _addr) external {
+    function adminSetBridge(address _addr) external onlyOwner {
         bridge = _addr;
     }
 
