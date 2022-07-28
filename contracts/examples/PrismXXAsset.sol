@@ -34,6 +34,10 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         __Ownable_init_unchained();
     }
 
+    function adminSetBridge(address _addr) external {
+        bridge = _addr;
+    }
+
     function getERC20Info(bytes32 _asset)
         external
         view
