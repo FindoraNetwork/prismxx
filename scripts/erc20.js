@@ -13,21 +13,23 @@ async function deploy_erc20() {
 }
 
 async function main() {
-    const proxy_address = "0xc8fa18086db6846aa4a330e88698357142262256";
-    const bridge_address = "0x2B7835AE05C9Cb5EF086e3BFe249e2658b450E8d";
-    const ledger_address = "0xeE8Ffb1D3CE088A2415f1F9C00585a296EE063B7";
-    const asset_address = "0x5f9552fEd754F20B636C996DaDB32806554Bb995";
+    const proxy_address = "0x0bafe641dbca0ef19eda10346d56fcd08032d35f";
+    const bridge_address = "0x899d4d8f441E5B59EB21ceb58fce723bb5A85C55";
+    const ledger_address = "0x48762c0161B97157e52df4F4C146973788157330";
+    const asset_address = "0x86E6D28129Bf73B156C99A11A6bB75E276dBA66b";
     const erc20_prefix = "0x0000000000000000000000000000000000000000000000000000000000000077";
     const receiver = "0x982c2f5688c687862aeb1b19521324554eab3abd70e4284dd598ec1297e676aa";
     
     let gld = await deploy_erc20();
 
-    await gld.approve(ledger_address, 90000000);
+    const decimal = Math.pow(10, 18);;
+
+    await gld.approve(ledger_address, "9000000000000000000");
 
     const Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
     let bridge = await Bridge.attach(bridge_address);
 
-    await bridge.depositFRC20(gld.address, receiver, 1000000);
+    await bridge.depositFRC20(gld.address, receiver, "9000000000000000000");
 
     let amount = await gld.balanceOf(ledger_address);
 

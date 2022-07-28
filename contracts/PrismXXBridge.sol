@@ -147,6 +147,14 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         return a * pow;
     }
 
+    function _shrinkDecimal(uint256 amount, uint8 decimal) private pure returns(uint256) {
+        uint256 pow = 10**decimal;
+
+        uint256 a = amount / pow;
+
+        return a;
+    }
+
     function _extendDecimal(uint256 amount, uint8 decimal)
         private
         pure
@@ -238,6 +246,8 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
         uint8 target_decimal = decimal;
 
+        uint256 value = 0;
+
         if (decimal > 6) {
             require(
                 _checkDecimal(_value, decimal - 6) == _value,
@@ -245,6 +255,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
             );
 
             target_decimal = 6;
+            value = _shrinkDecimal(_value, decimal - 6);
         }
 
         bytes32 asset = computeERC20AssetType(_frc20);
@@ -256,7 +267,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         address _from = msg.sender;
 
         // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, _value, target_decimal, 0);
+        MintOp memory op = MintOp(asset, _to, value, target_decimal, 0);
 
         ops.push(op);
 
