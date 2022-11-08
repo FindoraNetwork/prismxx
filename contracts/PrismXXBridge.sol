@@ -297,7 +297,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         address _from = msg.sender;
 
         // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, 1, 1, 1);
+        MintOp memory op = MintOp(asset, _to, 1, 0, 1);
 
         ops.push(op);
 

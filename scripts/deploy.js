@@ -3,7 +3,7 @@ const hre = require("hardhat");
 async function deploy_asset(bridge) {
     const Asset = await hre.ethers.getContractFactory("PrismXXAsset");
 
-    const asset = await Asset.deploy(bridge.address);
+    const asset = await hre.upgrades.deployProxy(Asset, [bridge.address]);
 
     await asset.deployed();
 
@@ -51,7 +51,12 @@ async function redeploy_bridge(proxy_address) {
 async function deploy_ledger() {
     let Ledger = await hre.ethers.getContractFactory("PrismXXLedger");
 
-    let ledger = await Ledger.deploy();
+    // let ledger = await Ledger.deploy();
+    const ledger = await hre.upgrades.deployProxy(Ledger, 
+        {
+            unsafeAllow: ['delegatecall'],
+        },
+    );
 
     await ledger.deployed();
 
