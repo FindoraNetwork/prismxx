@@ -9,9 +9,9 @@ async function deploy_asset(bridge) {
 
     console.log("asset address is:", asset.address);
 
-    let receipt = await bridge.adminSetAsset(asset.address);
+    await bridge.adminSetAsset(asset.address);
 
-    return asset;
+    return asset.address;
 }
 
 async function redeploy_bridge(proxy_address) {
@@ -34,62 +34,17 @@ async function redeploy_bridge(proxy_address) {
     return bridge;
 }
 
-// async function deploy_ledger(bridge, asset) {
-//     let Ledger = await hre.ethers.getContractFactory("PrismXXLedger");
-//
-//     let ledger = await Ledger.deploy(bridge.address, asset);
-//
-//     await ledger.deployed();
-//
-//     console.log("ledegr address is:", ledger.address);
-//
-//     let receipt = await bridge.adminSetLedger(ledger.address);
-//
-//     return ledger;
-// }
-
-async function deploy_ledger() {
+async function deploy_ledger(bridge, asset_address) {
     let Ledger = await hre.ethers.getContractFactory("PrismXXLedger");
 
     // let ledger = await Ledger.deploy();
-    const ledger = await hre.upgrades.deployProxy(Ledger, 
-        {
-            unsafeAllow: ['delegatecall'],
-        },
-    );
+    const ledger = await hre.upgrades.deployProxy(Ledger, [bridge.address, asset_address]);
 
     await ledger.deployed();
 
     console.log("ledger address is:", ledger.address);
 
-    return ledger.address;
-}
-
-async function deploy_proxy_admin() {
-    let ProxyAdmin = await hre.ethers.getContractFactory("PrismXXProxyAdmin");
-
-    let proxyAdmin = await ProxyAdmin.deploy();
-
-    await proxyAdmin.deployed();
-
-    console.log("PrismXXProxyAdmin address is:", proxyAdmin.address);
-
-    return proxyAdmin.address;
-}
-
-async function deploy_proxy() {
-
-    let ledger_address = await deploy_ledger();
-    let proxy_admin_address = await deploy_proxy_admin();
-    let PrismXXProxy = await hre.ethers.getContractFactory("PrismXXProxy");
-
-    let proxy = await PrismXXProxy.deploy(ledger_address,proxy_admin_address,"0x8129fc1c");
-
-    await proxy.deployed();
-
-    console.log("PrismXXProxy address is:", proxy.address);
-
-    return proxy.address;
+    await bridge.adminSetLedger(ledger.address);
 }
 
 async function main() {
@@ -97,8 +52,7 @@ async function main() {
     
     let asset = await deploy_asset(bridge);
 
-    let ledger = await deploy_proxy();
-
+    await deploy_ledger(bridge, asset);
 }
 
 main()

@@ -3,13 +3,13 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "../interfaces/IPrismXXLedger.sol";
 import "../interfaces/IERC20Mintable.sol";
 import "../interfaces/IERC20Burnable.sol";
@@ -20,11 +20,12 @@ contract PrismXXLedger is
     Initializable,
     OwnableUpgradeable,
     IPrismXXLedger,
-    ERC721Holder,
-    ERC1155Holder,
+    ERC721HolderUpgradeable,
+    ERC1155HolderUpgradeable,
     AssetTypeUtils
 {
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using AddressUpgradeable for address;
 
     address public bridge;
     address public asset;
@@ -37,8 +38,6 @@ contract PrismXXLedger is
     function initialize(address _bridge, address _asset) public initializer {
         bridge = _bridge;
         asset = _asset;
-        __Context_init_unchained();
-        __Ownable_init_unchained();
     }
 
     /**
@@ -77,7 +76,7 @@ contract PrismXXLedger is
 
             ct.burnFrom(_target, _amount);
         } else {
-            IERC20 ct = IERC20(_frc20);
+            IERC20Upgradeable ct = IERC20Upgradeable(_frc20);
 
             ct.safeTransferFrom(_target, address(this), _amount);
         }
@@ -104,13 +103,13 @@ contract PrismXXLedger is
 
             ct.mint(_target, _amount);
         } else {
-            IERC20 ct = IERC20(_frc20);
+            IERC20Upgradeable ct = IERC20Upgradeable(_frc20);
 
             ct.safeTransfer(_target, _amount);
         }
 
-        if (Address.isContract(_target)) {
-            Address.functionCall(_target, _data);
+        if (_target.isContract()) {
+            _target.functionCall(_data);
         }
     }
 
@@ -119,7 +118,7 @@ contract PrismXXLedger is
         address _target,
         uint256 tokenId
     ) external override onlyBridge {
-        IERC721 ct = IERC721(_frc721);
+        IERC721Upgradeable ct = IERC721Upgradeable(_frc721);
 
         ct.safeTransferFrom(_target, address(this), tokenId);
     }
@@ -130,7 +129,7 @@ contract PrismXXLedger is
         uint256 _id,
         bytes calldata _data
     ) external override onlyBridge {
-        IERC721 ct = IERC721(_addr);
+        IERC721Upgradeable ct = IERC721Upgradeable(_addr);
 
         ct.safeTransferFrom(address(this), _target, _id, _data);
     }
@@ -141,7 +140,7 @@ contract PrismXXLedger is
         uint256 _id,
         uint256 _amount
     ) external override onlyBridge {
-        IERC1155 ct = IERC1155(_addr);
+        IERC1155Upgradeable ct = IERC1155Upgradeable(_addr);
 
         ct.safeTransferFrom(_target, address(this), _id, _amount, "");
     }
@@ -153,7 +152,7 @@ contract PrismXXLedger is
         uint256 _amount,
         bytes calldata _data
     ) external override onlyBridge {
-        IERC1155 ct = IERC1155(_addr);
+        IERC1155Upgradeable ct = IERC1155Upgradeable(_addr);
 
         ct.safeTransferFrom(address(this), _target, _id, _amount, _data);
     }

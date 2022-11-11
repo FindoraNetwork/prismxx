@@ -27,7 +27,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
     struct MintOp {
         bytes32 asset;
-        bytes32 receiver;
+        bytes receiver;
         uint256 amount;
         uint8 decimal;
         uint256 max_supply;
@@ -37,7 +37,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
     // _from: from H160 address
     // _to: to FRA address.
     // _amount: amount to deposit.
-    event DepositFRA(address _from, bytes32 _to, uint256 _amount);
+    event DepositFRA(address _from, bytes _to, uint256 _amount);
 
     // Deposit FRC20
     // _frc20: FRC20 contract address
@@ -47,16 +47,16 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
     event DepositFRC20(
         address _frc20,
         address _from,
-        bytes32 _to,
+        bytes _to,
         uint256 _amount
     );
 
-    event DepositFRC721(address _addr, address _from, bytes32 _to, uint256 _id);
+    event DepositFRC721(address _addr, address _from, bytes _to, uint256 _id);
 
     event DepositFRC1155(
         address _addr,
         address _from,
-        bytes32 _to,
+        bytes _to,
         uint256 _id,
         uint256 amount
     );
@@ -65,7 +65,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
     // _from: from FRA address
     // _to: to H160 address.
     // _amount: amount to deposit.
-    event WithdrawFRA(bytes32 _from, address _to, uint256 _amount);
+    event WithdrawFRA(bytes _from, address _to, uint256 _amount);
 
     // Withdraw FRC20
     // _frc20: FRC20 contract address
@@ -74,21 +74,21 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
     // _amount: amount to deposit.
     event WithdrawFRC20(
         address _frc20,
-        bytes32 _from,
+        bytes _from,
         address _to,
         uint256 _amount
     );
 
     event WithdrawFRC721(
         address _frc20,
-        bytes32 _from,
+        bytes _from,
         address _to,
         uint256 _id
     );
 
     event WithdrawFRC1155(
         address _frc20,
-        bytes32 _from,
+        bytes _from,
         address _to,
         uint256 _id,
         uint256 _amount
@@ -175,7 +175,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
      *
      * @param _to address of asset contract.
      */
-    function depositFRA(bytes32 _to) public payable {
+    function depositFRA(bytes calldata _to) public payable {
         // Decimal mapping for FRA.
         uint256 amount = msg.value;
 
@@ -201,7 +201,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
      * @param _data additional data when transferring funds.
      */
     function withdrawFRA(
-        bytes32 _from,
+        bytes calldata _from,
         address payable _to,
         uint256 _value,
         bytes calldata _data
@@ -241,9 +241,12 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
      */
     function depositFRC20(
         address _frc20,
-        bytes32 _to,
+        bytes calldata _to,
         uint256 _value
     ) public {
+        require(asset_contract != address(0), "Prism asset must be inital");
+        require(ledger_contract != address(0), "Prism ledger must be inital");
+
         IERC20Metadata erc20 = IERC20Metadata(_frc20);
 
         uint8 decimal = erc20.decimals();
@@ -285,9 +288,12 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
     function depositFRC721(
         address _addr,
-        bytes32 _to,
+        bytes calldata _to,
         uint256 _id
     ) public {
+        require(asset_contract != address(0), "Prism asset must be inital");
+        require(ledger_contract != address(0), "Prism ledger must be inital");
+
         bytes32 asset = computeNFTAssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
@@ -311,10 +317,13 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
     function depositFRC1155(
         address _addr,
-        bytes32 _to,
+        bytes calldata _to,
         uint256 _id,
         uint256 _amount
     ) public {
+        require(asset_contract != address(0), "Prism asset must be inital");
+        require(ledger_contract != address(0), "Prism ledger must be inital");
+
         bytes32 asset = computeNFTAssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
@@ -347,7 +356,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
      */
     function _withdrawAsset(
         bytes32 _asset,
-        bytes32 _from,
+        bytes calldata _from,
         address _to,
         uint256 _value,
         bytes calldata _data
@@ -403,7 +412,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
      */
     function withdrawAsset(
         bytes32 _asset,
-        bytes32 _from,
+        bytes calldata _from,
         address _to,
         uint256 _value,
         bytes calldata _data
