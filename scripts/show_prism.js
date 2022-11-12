@@ -1,24 +1,13 @@
 const hre = require("hardhat");
+const utils = require("./address_utils");
 
 async function main() {
-    const factory = await hre.ethers.getContractFactory("PrismProxy");
-    const proxy = await factory.attach("0x0bafe641dbca0ef19eda10346d56fcd08032d35f");
+    let addrs = await utils.get_prism_addrs();
 
-    console.log(proxy.address);
-
-    const bridge_address = await proxy.prismBridgeAddress();
-
-    console.log("bridge address:", bridge_address);
-
-    const Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
-
-    const bridge = await Bridge.attach(bridge_address);
-
-    const ledger_address = await bridge.ledger_contract();
-    const asset_address = await bridge.asset_contract();
-
-    console.log("ledger address:", ledger_address);
-    console.log("asset address:", asset_address);
+    console.log("proxy address:", addrs.proxy);
+    console.log("bridge address:", addrs.bridge);
+    console.log("ledger address:", addrs.ledger);
+    console.log("asset address:", addrs.asset);
 }
 
 main()

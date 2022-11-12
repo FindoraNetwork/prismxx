@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const utils = require("./address_utils");
 
 async function deploy_erc1155() {
     let MTK = await hre.ethers.getContractFactory("MyERC1155");
@@ -13,20 +14,17 @@ async function deploy_erc1155() {
 }
 
 async function main() {
-    const proxy_address = "0xc8fa18086db6846aa4a330e88698357142262256";
-    const bridge_address = "0x2B7835AE05C9Cb5EF086e3BFe249e2658b450E8d";
-    const ledger_address = "0xeE8Ffb1D3CE088A2415f1F9C00585a296EE063B7";
-    const asset_address = "0x5f9552fEd754F20B636C996DaDB32806554Bb995";
-    const erc20_prefix = "0x0000000000000000000000000000000000000000000000000000000000000077";
-    const receiver = "0x982c2f5688c687862aeb1b19521324554eab3abd70e4284dd598ec1297e676aa";
+    const addrs = await utils.get_prism_addrs();
+
+    const receiver = "0x01020b0110ee320c89fa0e1ba5e676aebf383d505e33251635b7abacd54dbee1f618";
     
     let mtk = await deploy_erc1155();
 
     await mtk.mint("0x72488bAa718F52B76118C79168E55c209056A2E6", 0, 100, "0x");
 
-    await mtk.setApprovalForAll(ledger_address, true);
+    await mtk.setApprovalForAll(addrs.ledger, true);
     const Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
-    let bridge = await Bridge.attach(bridge_address);
+    let bridge = await Bridge.attach(addrs.bridge);
 
     await bridge.depositFRC1155(mtk.address, receiver, 0, 100);
 }

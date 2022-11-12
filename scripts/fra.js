@@ -1,16 +1,17 @@
 const hre = require("hardhat");
+const utils = require("./address_utils");
 
 async function main() {
-    const factory_proxy = await hre.ethers.getContractFactory("PrismProxy");
+    const addrs = await utils.get_prism_addrs();
 
     const factory = await hre.ethers.getContractFactory("PrismXXBridge");
-    const bridge = await factory.attach("0x899d4d8f441E5B59EB21ceb58fce723bb5A85C55");
+    const bridge = await factory.attach(addrs.bridge);
 
     const value = hre.ethers.utils.parseEther("1");
 
-    let receipt = await bridge.depositFRA("0x982c2f5688c687862aeb1b19521324554eab3abd70e4284dd598ec1297e676aa", { value });
+    let receipt = await bridge.depositFRA("0x01020b0110ee320c89fa0e1ba5e676aebf383d505e33251635b7abacd54dbee1f618", { value });
 
-    console.log(receipt);
+    console.log(receipt.hash)
 }
 
 main()

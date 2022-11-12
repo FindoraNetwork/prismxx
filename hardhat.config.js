@@ -9,7 +9,7 @@ module.exports = {
     networks: {
         hardhat: {},
         localhost: {
-            url: "http://localhost:8545",
+            url: "http://127.0.0.1:8545",
             accounts: ["0x4d05b965f821ea900ddd995dfa1b6caa834eaaa1ebe100a9760baf9331aae567"]
         },
         qa02: {

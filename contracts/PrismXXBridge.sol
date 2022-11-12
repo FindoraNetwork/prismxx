@@ -15,7 +15,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
     using Address for address;
     // Note, in here, Owner is system.
 
-    address private __self = address(this);
+    address public __self = address(this);
 
     address public proxy_contract; // address of proxy contract
     address public ledger_contract; // address of ledger contract
