@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-    const addr = "0x039849E3EAe3D525Fd21a19b5400b0d1Bd3AB61C";
+    const addr = "0xd682f2D477537Dfb9b9AD69Dd2B760104405c0B3";
     
     let GLD = await hre.ethers.getContractFactory("MyToken");
 

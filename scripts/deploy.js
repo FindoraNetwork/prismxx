@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const utils = require("./address_utils");
 
 async function deploy_asset(bridge) {
     const Asset = await hre.ethers.getContractFactory("PrismXXAsset");
@@ -48,7 +49,9 @@ async function deploy_ledger(bridge, asset_address) {
 }
 
 async function main() {
-    let bridge = await redeploy_bridge("0x0bafe641dbca0ef19eda10346d56fcd08032d35f");
+    let addrs = await utils.get_proxy_address();
+
+    let bridge = await redeploy_bridge(addrs);
     
     let asset = await deploy_asset(bridge);
 
