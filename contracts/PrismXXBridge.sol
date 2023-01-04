@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/IPrismXXLedger.sol";
 import "./interfaces/IPrismXXAsset.sol";
 import "./AssetTypeUtils.sol";
@@ -11,27 +12,18 @@ import "./AssetTypeUtils.sol";
 /**
  * @dev prismXXBridge cross-chain bridge contract.
  */
-contract PrismXXBridge is Ownable, AssetTypeUtils {
+contract PrismXXBridge is Ownable, ReentrancyGuard, AssetTypeUtils {
     using Address for address;
     // Note, in here, Owner is system.
 
-    address public __self = address(this);
+    address public __self;
 
     address public proxy_contract; // address of proxy contract
     address public ledger_contract; // address of ledger contract
     address public asset_contract; // address of asset contract
 
-    MintOp[] public ops;
-
     bytes32 constant FRA = bytes32(0x00);
-
-    struct MintOp {
-        bytes32 asset;
-        bytes receiver;
-        uint256 amount;
-        uint8 decimal;
-        uint256 max_supply;
-    }
+    address constant SYSTEM_ADDR = address(0x2000);
 
     // Deposit FRA
     // _from: from H160 address
@@ -61,6 +53,14 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         uint256 amount
     );
 
+    event DepositAsset(
+        bytes32 asset,
+        bytes receiver,
+        uint256 amount,
+        uint8 decimal,
+        uint256 max_supply
+    );
+
     // Withdraw FRA
     // _from: from FRA address
     // _to: to H160 address.
@@ -79,12 +79,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         uint256 _amount
     );
 
-    event WithdrawFRC721(
-        address _frc20,
-        bytes _from,
-        address _to,
-        uint256 _id
-    );
+    event WithdrawFRC721(address _frc20, bytes _from, address _to, uint256 _id);
 
     event WithdrawFRC1155(
         address _frc20,
@@ -96,7 +91,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
     modifier onlySystem() {
         require(
-            msg.sender == address(0x00),
+            msg.sender == SYSTEM_ADDR,
             "Only system can call this function"
         );
         _;
@@ -107,6 +102,13 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
             msg.sender == proxy_contract,
             "Only proxy can call this function"
         );
+        _;
+    }
+
+    modifier notPrismContract(address to) {
+        require(to != proxy_contract, "target address must not be proxy");
+        require(to != ledger_contract, "target address must not be ledger");
+        require(to != asset_contract, "target address must not be asset");
         _;
     }
 
@@ -181,9 +183,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
         require(_checkDecimal(amount, 12) == amount, "low 12 must be 0.");
 
-        MintOp memory op = MintOp(FRA, _to, amount, 6, 0);
-
-        ops.push(op);
+        emit DepositAsset(FRA, _to, amount, 6, 0);
 
         Address.sendValue(payable(proxy_contract), amount);
 
@@ -225,7 +225,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         address payable _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlyProxy {
+    ) public onlyProxy notPrismContract(_to) {
         if (Address.isContract(_to)) {
             Address.functionCallWithValue(_to, _data, _value);
         } else {
@@ -273,10 +273,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
         address _from = msg.sender;
 
-        // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, value, target_decimal, 0);
-
-        ops.push(op);
+        emit DepositAsset(asset, _to, value, target_decimal, 0);
 
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
 
@@ -302,10 +299,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
         address _from = msg.sender;
 
-        // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, 1, 0, 1);
-
-        ops.push(op);
+        emit DepositAsset(asset, _to, 1, 0, 1);
 
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
 
@@ -332,10 +326,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
 
         address _from = msg.sender;
 
-        // Build mintop for coinbase.
-        MintOp memory op = MintOp(asset, _to, _amount, 0, 0);
-
-        ops.push(op);
+        emit DepositAsset(asset, _to, _amount, 0, 0);
 
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
 
@@ -360,7 +351,7 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         address _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlyProxy {
+    ) public onlyProxy notPrismContract(_to) {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -420,28 +411,6 @@ contract PrismXXBridge is Ownable, AssetTypeUtils {
         PrismXXBridge bridge = PrismXXBridge(payable(__self));
 
         bridge._withdrawAsset(_asset, _from, _to, _value, _data);
-    }
-
-    /**
-     * @dev Consume current MintOp entry, this function can only be called by system.
-     * @return current MintOp entry
-     */
-    function consumeMint() public onlySystem returns (MintOp[] memory) {
-        PrismXXBridge bridge = PrismXXBridge(payable(__self));
-
-        return bridge._consumeMint();
-    }
-
-    /**
-     * @dev Get and delete current MintOp entry, this function can only be called by proxy.
-     * @return current MintOp entry
-     */
-    function _consumeMint() public onlyProxy returns (MintOp[] memory) {
-        MintOp[] memory ret = ops;
-
-        delete ops;
-
-        return ret;
     }
 
     /**
