@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "./interfaces/IPrismXXLedger.sol";
 import "./interfaces/IPrismXXAsset.sol";
 import "./AssetTypeUtils.sol";
@@ -12,13 +14,14 @@ import "./AssetTypeUtils.sol";
 /**
  * @dev prismXXBridge cross-chain bridge contract.
  */
-contract PrismXXBridge is Ownable, ReentrancyGuard, AssetTypeUtils {
-    using Address for address;
-    // Note, in here, Owner is system.
+contract PrismXXBridge is
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    AssetTypeUtils
+{
+    using AddressUpgradeable for address;
+    using AddressUpgradeable for address payable;
 
-    address public __self;
-
-    address public proxy_contract; // address of proxy contract
     address public ledger_contract; // address of ledger contract
     address public asset_contract; // address of asset contract
 
@@ -97,27 +100,10 @@ contract PrismXXBridge is Ownable, ReentrancyGuard, AssetTypeUtils {
         _;
     }
 
-    modifier onlyProxy() {
-        require(
-            msg.sender == proxy_contract,
-            "Only proxy can call this function"
-        );
-        _;
-    }
-
     modifier notPrismContract(address to) {
-        require(to != proxy_contract, "target address must not be proxy");
         require(to != ledger_contract, "target address must not be ledger");
         require(to != asset_contract, "target address must not be asset");
         _;
-    }
-
-    /**
-     * @dev constructor function, for init proxy_contract.
-     * @param _proxy_contract address of proxy contract.
-     */
-    constructor(address _proxy_contract) {
-        proxy_contract = _proxy_contract;
     }
 
     /**
@@ -185,51 +171,24 @@ contract PrismXXBridge is Ownable, ReentrancyGuard, AssetTypeUtils {
 
         emit DepositAsset(FRA, _to, amount, 6, 0);
 
-        Address.sendValue(payable(proxy_contract), amount);
-
         emit DepositFRA(msg.sender, _to, amount);
     }
 
     /**
      * @dev withdraw FRA token.
-     * @notice This function called on end_block, Before this function called, mint _value FRA to this contract.
-     *   This funtion don't cost gas.
-     *
-     * @param _from from address of findora.
-     * @param _to receive address.
-     * @param _value amount of funds transferred.
-     * @param _data additional data when transferring funds.
+     * @param to receive address.
+     * @param value amount of funds transfer.
+     * @param data additional data when transferring funds.
      */
     function withdrawFRA(
-        bytes calldata _from,
-        address payable _to,
-        uint256 _value,
-        bytes calldata _data
-    ) public onlySystem {
-        Address.sendValue(payable(__self), _value);
-
-        PrismXXBridge bridge = PrismXXBridge(payable(__self));
-
-        bridge._withdrawFRA(_to, _value, _data);
-
-        emit WithdrawFRA(_from, _to, _value);
-    }
-
-    /**
-     * @dev withdraw FRA token.
-     * @param _to receive address.
-     * @param _value amount of funds transfer.
-     * @param _data additional data when transferring funds.
-     */
-    function _withdrawFRA(
-        address payable _to,
-        uint256 _value,
-        bytes calldata _data
-    ) public onlyProxy notPrismContract(_to) {
-        if (Address.isContract(_to)) {
-            Address.functionCallWithValue(_to, _data, _value);
+        address payable to,
+        uint256 value,
+        bytes calldata data
+    ) public onlySystem notPrismContract(to) {
+        if (to.isContract()) {
+            to.functionCallWithValue(data, value);
         } else {
-            Address.sendValue(_to, _value);
+            to.sendValue(value);
         }
     }
 
@@ -247,7 +206,7 @@ contract PrismXXBridge is Ownable, ReentrancyGuard, AssetTypeUtils {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
 
-        IERC20Metadata erc20 = IERC20Metadata(_frc20);
+        IERC20MetadataUpgradeable erc20 = IERC20MetadataUpgradeable(_frc20);
 
         uint8 decimal = erc20.decimals();
 
@@ -345,13 +304,13 @@ contract PrismXXBridge is Ownable, ReentrancyGuard, AssetTypeUtils {
      * @param _value amount of funds transferred.
      * @param _data additional data when transferring funds.
      */
-    function _withdrawAsset(
+    function withdrawAsset(
         bytes32 _asset,
         bytes calldata _from,
         address _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlyProxy notPrismContract(_to) {
+    ) public onlySystem notPrismContract(_to) {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -374,7 +333,7 @@ contract PrismXXBridge is Ownable, ReentrancyGuard, AssetTypeUtils {
         } else {
             address frc20 = ac.getERC20Info(_asset);
 
-            IERC20Metadata erc20 = IERC20Metadata(frc20);
+            IERC20MetadataUpgradeable erc20 = IERC20MetadataUpgradeable(frc20);
 
             // If asset don't regist, revert.
             require(frc20 != address(0x00), "Asset type must registed");
@@ -391,26 +350,6 @@ contract PrismXXBridge is Ownable, ReentrancyGuard, AssetTypeUtils {
 
             emit WithdrawFRC20(frc20, _from, _to, amount);
         }
-    }
-
-    /**
-     * @dev withdraw FRC20 token, this function can only be called by system.
-     * @param _asset the encoded ID of the asset.
-     * @param _from from address of findora.
-     * @param _to receive address.
-     * @param _value amount of funds transferred.
-     * @param _data additional data when transferring funds.
-     */
-    function withdrawAsset(
-        bytes32 _asset,
-        bytes calldata _from,
-        address _to,
-        uint256 _value,
-        bytes calldata _data
-    ) public onlySystem {
-        PrismXXBridge bridge = PrismXXBridge(payable(__self));
-
-        bridge._withdrawAsset(_asset, _from, _to, _value, _data);
     }
 
     /**
