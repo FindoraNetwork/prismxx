@@ -4,7 +4,6 @@ const utils = require("./address_utils");
 async function main() {
     let addrs = await utils.get_prism_addrs();
 
-    console.log("proxy address:", addrs.proxy);
     console.log("bridge address:", addrs.bridge);
     console.log("ledger address:", addrs.ledger);
     console.log("asset address:", addrs.asset);

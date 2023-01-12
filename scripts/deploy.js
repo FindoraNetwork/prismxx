@@ -15,22 +15,15 @@ async function deploy_asset(bridge) {
     return asset.address;
 }
 
-async function redeploy_bridge(proxy_address) {
+async function redeploy_bridge() {
+
     let Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
 
-    let bridge = await Bridge.deploy(proxy_address);
+    const bridge = await hre.upgrades.deployProxy(Bridge, []);
 
     await bridge.deployed();
 
     console.log("Bridge address is:", bridge.address);
-
-    let factory_proxy = await hre.ethers.getContractFactory("PrismProxy");
-
-    let proxy = await factory_proxy.attach(proxy_address);
-
-    console.log("Owner of proxy is :", await proxy.owner());
-
-    await proxy.adminSetPrismBridgeAddress(bridge.address);
 
     return bridge;
 }
@@ -49,9 +42,8 @@ async function deploy_ledger(bridge, asset_address) {
 }
 
 async function main() {
-    let addrs = await utils.get_proxy_address();
 
-    let bridge = await redeploy_bridge(addrs);
+    let bridge = await redeploy_bridge();
     
     let asset = await deploy_asset(bridge);
 

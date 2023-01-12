@@ -92,6 +92,11 @@ contract PrismXXBridge is
         uint256 _amount
     );
 
+    function initialize() public initializer {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+    }
+
     modifier onlySystem() {
         require(
             msg.sender == SYSTEM_ADDR,
