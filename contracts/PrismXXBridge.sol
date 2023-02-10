@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./interfaces/IPrismXXLedger.sol";
 import "./interfaces/IPrismXXAsset.sol";
@@ -15,15 +14,15 @@ import "./AssetTypeUtils.sol";
  * @dev prismXXBridge cross-chain bridge contract.
  */
 contract PrismXXBridge is
-    OwnableUpgradeable,
-    ReentrancyGuardUpgradeable,
+    Ownable,
+    ReentrancyGuard,
     AssetTypeUtils
 {
-    using AddressUpgradeable for address;
-    using AddressUpgradeable for address payable;
+    using Address for address;
+    using Address for address payable;
 
-    address public ledger_contract; // address of ledger contract
-    address public asset_contract; // address of asset contract
+    address public immutable ledger_contract; // address of ledger contract
+    address public immutable asset_contract; // address of asset contract
 
     bytes32 constant FRA = bytes32(0x00);
     address constant SYSTEM_ADDR = address(0x2000);
@@ -92,9 +91,14 @@ contract PrismXXBridge is
         uint256 _amount
     );
 
-    function initialize() public initializer {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
+    constructor(
+        address ledger,
+        address asset,
+        address owner
+    ) {
+        ledger_contract = ledger;
+        asset_contract = asset;
+        _transferOwnership(owner);
     }
 
     modifier onlySystem() {
@@ -109,22 +113,6 @@ contract PrismXXBridge is
         require(to != ledger_contract, "target address must not be ledger");
         require(to != asset_contract, "target address must not be asset");
         _;
-    }
-
-    /**
-     * @dev Set contarct address of ledger, this function can only be called by owner.
-     * @param _ledger_contract address of ledger contract.
-     */
-    function adminSetLedger(address _ledger_contract) public onlyOwner {
-        ledger_contract = _ledger_contract;
-    }
-
-    /**
-     * @dev Set contarct address of asset, this function can only be called by owner.
-     * @param _asset_contract address of asset contract.
-     */
-    function adminSetAsset(address _asset_contract) public onlyOwner {
-        asset_contract = _asset_contract;
     }
 
     // Utils:
@@ -168,7 +156,7 @@ contract PrismXXBridge is
      *
      * @param _to address of asset contract.
      */
-    function depositFRA(bytes calldata _to) public payable {
+    function depositFRA(bytes calldata _to) public payable nonReentrant {
         // Decimal mapping for FRA.
         uint256 amount = msg.value;
 
@@ -189,7 +177,7 @@ contract PrismXXBridge is
         address payable to,
         uint256 value,
         bytes calldata data
-    ) public onlySystem notPrismContract(to) {
+    ) public onlySystem notPrismContract(to) nonReentrant {
         if (to.isContract()) {
             to.functionCallWithValue(data, value);
         } else {
@@ -207,11 +195,11 @@ contract PrismXXBridge is
         address _frc20,
         bytes calldata _to,
         uint256 _value
-    ) public {
+    ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
 
-        IERC20MetadataUpgradeable erc20 = IERC20MetadataUpgradeable(_frc20);
+        IERC20Metadata erc20 = IERC20Metadata(_frc20);
 
         uint8 decimal = erc20.decimals();
 
@@ -251,7 +239,7 @@ contract PrismXXBridge is
         address _addr,
         bytes calldata _to,
         uint256 _id
-    ) public {
+    ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
 
@@ -278,7 +266,7 @@ contract PrismXXBridge is
         bytes calldata _to,
         uint256 _id,
         uint256 _amount
-    ) public {
+    ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
 
@@ -315,7 +303,7 @@ contract PrismXXBridge is
         address _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlySystem notPrismContract(_to) {
+    ) public onlySystem notPrismContract(_to) nonReentrant {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -338,7 +326,7 @@ contract PrismXXBridge is
         } else {
             address frc20 = ac.getERC20Info(_asset);
 
-            IERC20MetadataUpgradeable erc20 = IERC20MetadataUpgradeable(frc20);
+            IERC20Metadata erc20 = IERC20Metadata(frc20);
 
             // If asset don't regist, revert.
             require(frc20 != address(0x00), "Asset type must registed");
@@ -360,5 +348,9 @@ contract PrismXXBridge is
     /**
      * @dev Fallback function in order to receive FRA.
      */
-    receive() external payable {}
+    receive() external payable nonReentrant {}
+
+    function destroy(address payable receiver) external onlyOwner nonReentrant {
+        selfdestruct(receiver);
+    }
 }

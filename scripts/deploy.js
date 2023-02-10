@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const utils = require("./address_utils");
+// const utils = require("./address_utils");
 
 async function deploy_asset(bridge) {
     const Asset = await hre.ethers.getContractFactory("PrismXXAsset");
@@ -41,13 +41,28 @@ async function deploy_ledger(bridge, asset_address) {
     await bridge.adminSetLedger(ledger.address);
 }
 
+async function deploy_bridge() {
+    let BridgeCreator = await hre.ethers.getContractFactory("PrismXXBridgeCreator");
+
+    const creator = await BridgeCreator.deploy();
+
+    await creator.deployed();
+
+    console.log(creator.address);
+
+    const SALT = "0x0000000000000000000000000000000000000000";
+
+    const bridge_addr = await creator.deploy_create2(SALT);
+
+    console.log("Bridge address is:", bridge_addr);
+
+    return bridge_addr;
+}
+
 async function main() {
+    await deploy_bridge();
 
-    let bridge = await redeploy_bridge();
-    
-    let asset = await deploy_asset(bridge);
-
-    await deploy_ledger(bridge, asset);
+    // await deploy_ledger(bridge, asset);
 }
 
 main()
