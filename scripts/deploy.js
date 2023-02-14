@@ -1,61 +1,30 @@
 const hre = require("hardhat");
-// const utils = require("./address_utils");
-
-async function deploy_asset(bridge) {
-    const Asset = await hre.ethers.getContractFactory("PrismXXAsset");
-
-    const asset = await hre.upgrades.deployProxy(Asset, [bridge.address]);
-
-    await asset.deployed();
-
-    console.log("asset address is:", asset.address);
-
-    await bridge.adminSetAsset(asset.address);
-
-    return asset.address;
-}
-
-async function redeploy_bridge() {
-
-    let Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
-
-    const bridge = await hre.upgrades.deployProxy(Bridge, []);
-
-    await bridge.deployed();
-
-    console.log("Bridge address is:", bridge.address);
-
-    return bridge;
-}
-
-async function deploy_ledger(bridge, asset_address) {
-    let Ledger = await hre.ethers.getContractFactory("PrismXXLedger");
-
-    // let ledger = await Ledger.deploy();
-    const ledger = await hre.upgrades.deployProxy(Ledger, [bridge.address, asset_address]);
-
-    await ledger.deployed();
-
-    console.log("ledger address is:", ledger.address);
-
-    await bridge.adminSetLedger(ledger.address);
-}
 
 async function deploy_bridge() {
+    let Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
+    let Ledger = await hre.ethers.getContractFactory("PrismXXLedger");
+    let Asset = await hre.ethers.getContractFactory("PrismXXAsset");
+
     let BridgeCreator = await hre.ethers.getContractFactory("PrismXXBridgeCreator");
-
     const creator = await BridgeCreator.deploy();
-
     await creator.deployed();
+    console.log("BridgeCreator address is:", creator.address);
 
-    console.log(creator.address);
-
-    const SALT = "0x0000000000000000000000000000000000000000";
-
-    const bridge_addr = await creator.deploy_create2(SALT);
-
+    let SALT = "0x0000000000000000000000000000000000000000000000000000000000000001";
+    const bridge_addr = await creator.deploy_create2(0, SALT, Bridge.bytecode);
     console.log("Bridge address is:", bridge_addr);
 
+    SALT = "0x0000000000000000000000000000000000000000000000000000000000000002";
+    const ledger_addr = await creator.deploy_create2(0, SALT, Ledger.bytecode);
+    console.log("Bridge address is:", ledger_addr);
+
+    SALT = "0x0000000000000000000000000000000000000000000000000000000000000003";
+    const asset_addr = await creator.deploy_create2(0, SALT, Asset.bytecode);
+    console.log("Bridge address is:", asset_addr);
+
+    const bridge = Bridge.attach(bridge_addr);
+    await bridge.adminSetLedger(ledger_addr);
+    await bridge.adminSetAsset(asset_addr);
     return bridge_addr;
 }
 

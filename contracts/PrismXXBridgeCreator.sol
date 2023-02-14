@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Create2.sol";
 
-contract Creator {
+contract PrismXXBridgeCreator {
     function deploy_create2(uint256 amount, bytes32 salt, bytes calldata bytecode) external returns(address) {
         return Create2.deploy(amount, salt, bytecode);
     }
