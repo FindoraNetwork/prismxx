@@ -25,6 +25,6 @@ contract AssetTypeUtils {
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encode(ERC721_PREFIX, addr, tokenId));
+        return keccak256(abi.encode(ERC1155_PREFIX, addr, tokenId));
     }
 }
