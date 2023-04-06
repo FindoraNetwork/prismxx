@@ -11,8 +11,7 @@ interface IPrismXXLedger {
     function withdrawFRC20(
         address _frc20,
         address _target,
-        uint256 _amount,
-        bytes calldata _data
+        uint256 _amount
     ) external;
 
     function depositFRC721(
