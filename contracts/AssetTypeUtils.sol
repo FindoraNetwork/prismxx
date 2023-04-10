@@ -8,23 +8,43 @@ contract AssetTypeUtils {
 
     bytes32 constant ERC1155_PREFIX = keccak256("Findora ERC1155 Asset Type");
 
-    function computeERC20AssetType(address addr) public pure returns (bytes32) {
-        return keccak256(abi.encode(ERC20_PREFIX, addr));
+    address constant _anemoi_address = address(0x2002);
+
+    function computeERC20AssetType(
+        address addr
+    ) public view returns (bytes32 result) {
+        (bool success, bytes memory source) = _anemoi_address.staticcall(
+            abi.encode(ERC20_PREFIX, addr)
+        );
+        require(success && source.length == 32, "Precompile call failed");
+        assembly {
+            result := mload(add(source, 32))
+        }
     }
 
-    function computeERC721AssetType(address addr, uint256 tokenId)
-        public
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encode(ERC721_PREFIX, addr, tokenId));
+    function computeERC721AssetType(
+        address addr,
+        uint256 tokenId
+    ) public view returns (bytes32 result) {
+        (bool success, bytes memory source) = _anemoi_address.staticcall(
+            abi.encode(ERC721_PREFIX, addr, tokenId)
+        );
+        require(success && source.length == 32, "Precompile call failed");
+        assembly {
+            result := mload(add(source, 32))
+        }
     }
 
-    function computeERC1155AssetType(address addr, uint256 tokenId)
-        public
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encode(ERC1155_PREFIX, addr, tokenId));
+    function computeERC1155AssetType(
+        address addr,
+        uint256 tokenId
+    ) public view returns (bytes32 result) {
+        (bool success, bytes memory source) = _anemoi_address.staticcall(
+            abi.encode(ERC1155_PREFIX, addr, tokenId)
+        );
+        require(success && source.length == 32, "Precompile call failed");
+        assembly {
+            result := mload(add(source, 32))
+        }
     }
 }

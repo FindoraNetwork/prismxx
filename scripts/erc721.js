@@ -2,32 +2,32 @@ const hre = require("hardhat");
 const utils = require("./address_utils");
 
 async function deploy_erc721() {
-    let MTK = await hre.ethers.getContractFactory("MyToken");
+  let MTK = await hre.ethers.getContractFactory("MyToken");
 
-    let gld = await MTK.deploy();
+  let gld = await MTK.deploy();
 
-    await gld.deployed();
+  await gld.deployed();
 
-    console.log(gld.address);
+  console.log(gld.address);
 
-    return gld;
+  return gld;
 }
 
 async function main() {
-    let addrs = await utils.get_prism_addrs();
+  let addrs = await utils.get_prism_addrs();
 
-    const receiver = "0x01020b0110ee320c89fa0e1ba5e676aebf383d505e33251635b7abacd54dbee1f618";
-    
-    let mtk = await deploy_erc721();
+  const receiver = "0x39ad91453cdd6b203c57638113bc69de7dcd2ab8c62711534996726d73970834";
 
-    await mtk.safeMint("0x72488bAa718F52B76118C79168E55c209056A2E6", 0);
+  let mtk = await deploy_erc721();
 
-    await mtk.approve(addrs.ledger, 0);
+  await mtk.safeMint("0x72488bAa718F52B76118C79168E55c209056A2E6", 0);
 
-    const Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
-    let bridge = await Bridge.attach(addrs.bridge);
+  await mtk.approve(addrs.ledger, 0);
 
-    await bridge.depositFRC721(mtk.address, receiver, 0);
+  const Bridge = await hre.ethers.getContractFactory("PrismXXBridge");
+  let bridge = await Bridge.attach(addrs.bridge);
+
+  await bridge.depositFRC721(mtk.address, receiver, 0);
 }
 
 main()
