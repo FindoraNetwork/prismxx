@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 contract AssetTypeUtils {
     bytes32 constant ERC20_PREFIX = keccak256("Findora ERC20 Asset Type");
@@ -10,25 +10,19 @@ contract AssetTypeUtils {
 
     address constant _anemoi_address = address(0x2002);
 
-    function computeERC20AssetType(
-        address addr
-    ) public view returns (bytes32 result) {
+    function computeERC20AssetType(address addr) public view returns (bytes32) {
         (bool success, bytes memory source) = _anemoi_address.staticcall(
             abi.encode(ERC20_PREFIX, addr)
         );
         require(success && source.length == 32, "Precompile call failed");
-        assembly {
-            result := mload(add(source, 32))
-        }
+        return bytes32(source);
     }
 
     function computeERC721AssetType(
         address addr,
         uint256 tokenId
-    ) public view returns (bytes32 result) {
+    ) public view returns (bytes32) {
         bytes32 code = bytes32(tokenId);
-        bytes32 code0 = 0x00;
-        bytes32 code1 = 0x00;
         bytes memory tmp0 = new bytes(32);
         bytes memory tmp1 = new bytes(32);
         uint i = 0;
@@ -36,17 +30,14 @@ contract AssetTypeUtils {
             tmp0[i] = code[i];
         }
         tmp1[0] = code[31];
-        assembly {
-            code0 := mload(add(tmp0, 32))
-            code1 := mload(add(tmp1, 32))
-        }
+        bytes32 code0 = bytes32(tmp0);
+        bytes32 code1 = bytes32(tmp1);
+
         (bool success, bytes memory source) = _anemoi_address.staticcall(
             abi.encode(ERC721_PREFIX, addr, code0, code1)
         );
         require(success && source.length == 32, "Precompile call failed");
-        assembly {
-            result := mload(add(source, 32))
-        }
+        return bytes32(source);
     }
 
     function computeERC1155AssetType(
@@ -54,8 +45,6 @@ contract AssetTypeUtils {
         uint256 tokenId
     ) public view returns (bytes32 result) {
         bytes32 code = bytes32(tokenId);
-        bytes32 code0 = 0x00;
-        bytes32 code1 = 0x00;
         bytes memory tmp0 = new bytes(32);
         bytes memory tmp1 = new bytes(32);
         uint i = 0;
@@ -63,16 +52,13 @@ contract AssetTypeUtils {
             tmp0[i] = code[i];
         }
         tmp1[0] = code[31];
-        assembly {
-            code0 := mload(add(tmp0, 32))
-            code1 := mload(add(tmp1, 32))
-        }
+        bytes32 code0 = bytes32(tmp0);
+        bytes32 code1 = bytes32(tmp1);
+
         (bool success, bytes memory source) = _anemoi_address.staticcall(
             abi.encode(ERC1155_PREFIX, addr, code0, code1)
         );
         require(success && source.length == 32, "Precompile call failed");
-        assembly {
-            result := mload(add(source, 32))
-        }
+        return bytes32(source);
     }
 }

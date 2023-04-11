@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
@@ -128,36 +128,33 @@ contract PrismXXBridge is
     }
 
     // Utils:
-    function _checkDecimal(uint256 amount, uint8 decimal)
-        private
-        pure
-        returns (uint256)
-    {
-        uint256 pow = 10**decimal;
+    function _checkDecimal(
+        uint256 amount,
+        uint8 decimal
+    ) private pure returns (uint256) {
+        uint256 pow = 10 ** decimal;
 
         uint256 a = amount / pow;
 
         return a * pow;
     }
 
-    function _shrinkDecimal(uint256 amount, uint8 decimal)
-        private
-        pure
-        returns (uint256)
-    {
-        uint256 pow = 10**decimal;
+    function _shrinkDecimal(
+        uint256 amount,
+        uint8 decimal
+    ) private pure returns (uint256) {
+        uint256 pow = 10 ** decimal;
 
         uint256 a = amount / pow;
 
         return a;
     }
 
-    function _extendDecimal(uint256 amount, uint8 decimal)
-        private
-        pure
-        returns (uint256)
-    {
-        uint256 pow = 10**decimal;
+    function _extendDecimal(
+        uint256 amount,
+        uint8 decimal
+    ) private pure returns (uint256) {
+        uint256 pow = 10 ** decimal;
 
         return amount * pow;
     }
