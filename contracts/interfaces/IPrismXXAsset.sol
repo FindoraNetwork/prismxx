@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 interface IPrismXXAsset {
     function getERC20Info(bytes32 _asset) external view returns (address);
 
     function setERC20Info(bytes32 _asset, address _addr) external;
 
-    function getERC721Info(bytes32 _asset)
-        external
-        view
-        returns (address, uint256);
+    function getERC721Info(
+        bytes32 _asset
+    ) external view returns (address, uint256);
 
     function setERC721Info(
         bytes32 _asset,
@@ -17,10 +16,9 @@ interface IPrismXXAsset {
         uint256 tokenId
     ) external;
 
-    function getERC1155Info(bytes32 _asset)
-        external
-        view
-        returns (address, uint256);
+    function getERC1155Info(
+        bytes32 _asset
+    ) external view returns (address, uint256);
 
     function setERC1155Info(
         bytes32 _asset,

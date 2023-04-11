@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
@@ -128,36 +128,33 @@ contract PrismXXBridge is
     }
 
     // Utils:
-    function _checkDecimal(uint256 amount, uint8 decimal)
-        private
-        pure
-        returns (uint256)
-    {
-        uint256 pow = 10**decimal;
+    function _checkDecimal(
+        uint256 amount,
+        uint8 decimal
+    ) private pure returns (uint256) {
+        uint256 pow = 10 ** decimal;
 
         uint256 a = amount / pow;
 
         return a * pow;
     }
 
-    function _shrinkDecimal(uint256 amount, uint8 decimal)
-        private
-        pure
-        returns (uint256)
-    {
-        uint256 pow = 10**decimal;
+    function _shrinkDecimal(
+        uint256 amount,
+        uint8 decimal
+    ) private pure returns (uint256) {
+        uint256 pow = 10 ** decimal;
 
         uint256 a = amount / pow;
 
         return a;
     }
 
-    function _extendDecimal(uint256 amount, uint8 decimal)
-        private
-        pure
-        returns (uint256)
-    {
-        uint256 pow = 10**decimal;
+    function _extendDecimal(
+        uint256 amount,
+        uint8 decimal
+    ) private pure returns (uint256) {
+        uint256 pow = 10 ** decimal;
 
         return amount * pow;
     }
@@ -168,7 +165,7 @@ contract PrismXXBridge is
      *
      * @param _to address of asset contract.
      */
-    function depositFRA(bytes calldata _to) public payable {
+    function depositFRA(bytes calldata _to) public payable nonReentrant {
         // Decimal mapping for FRA.
         uint256 amount = msg.value;
 
@@ -189,7 +186,7 @@ contract PrismXXBridge is
         address payable to,
         uint256 value,
         bytes calldata data
-    ) public onlySystem notPrismContract(to) {
+    ) public onlySystem notPrismContract(to) nonReentrant {
         if (to.isContract()) {
             to.functionCallWithValue(data, value);
         } else {
@@ -207,7 +204,7 @@ contract PrismXXBridge is
         address _frc20,
         bytes calldata _to,
         uint256 _value
-    ) public {
+    ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
 
@@ -251,11 +248,11 @@ contract PrismXXBridge is
         address _addr,
         bytes calldata _to,
         uint256 _id
-    ) public {
+    ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
 
-        bytes32 asset = computeNFTAssetType(_addr, _id);
+        bytes32 asset = computeERC721AssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -278,11 +275,11 @@ contract PrismXXBridge is
         bytes calldata _to,
         uint256 _id,
         uint256 _amount
-    ) public {
+    ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
 
-        bytes32 asset = computeNFTAssetType(_addr, _id);
+        bytes32 asset = computeERC1155AssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -315,7 +312,7 @@ contract PrismXXBridge is
         address _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlySystem notPrismContract(_to) {
+    ) public onlySystem notPrismContract(_to) nonReentrant {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
@@ -351,9 +348,13 @@ contract PrismXXBridge is
                 amount = _extendDecimal(_value, decimal - 6);
             }
 
-            lc.withdrawFRC20(frc20, _to, amount, _data);
+            lc.withdrawFRC20(frc20, _to, amount);
 
             emit WithdrawFRC20(frc20, _from, _to, amount);
+
+            if (_to.isContract()) {
+                _to.functionCall(_data);
+            }
         }
     }
 

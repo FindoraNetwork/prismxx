@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 interface IPrismXXLedger {
     function depositFRC20(
@@ -11,8 +11,7 @@ interface IPrismXXLedger {
     function withdrawFRC20(
         address _frc20,
         address _target,
-        uint256 _amount,
-        bytes calldata _data
+        uint256 _amount
     ) external;
 
     function depositFRC721(

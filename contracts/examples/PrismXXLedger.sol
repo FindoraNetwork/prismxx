@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -91,8 +91,7 @@ contract PrismXXLedger is
     function withdrawFRC20(
         address _frc20,
         address _target,
-        uint256 _amount,
-        bytes calldata _data
+        uint256 _amount
     ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
@@ -106,10 +105,6 @@ contract PrismXXLedger is
             IERC20Upgradeable ct = IERC20Upgradeable(_frc20);
 
             ct.safeTransfer(_target, _amount);
-        }
-
-        if (_target.isContract()) {
-            _target.functionCall(_data);
         }
     }
 

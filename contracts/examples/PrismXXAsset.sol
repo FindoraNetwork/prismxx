@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import "../interfaces/IPrismXXAsset.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -36,20 +36,16 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         bridge = _addr;
     }
 
-    function getERC20Info(bytes32 _asset)
-        external
-        view
-        override
-        returns (address)
-    {
+    function getERC20Info(
+        bytes32 _asset
+    ) external view override returns (address) {
         return assets[_asset].addr;
     }
 
-    function setERC20Info(bytes32 _asset, address _addr)
-        external
-        override
-        onlyBridge
-    {
+    function setERC20Info(
+        bytes32 _asset,
+        address _addr
+    ) external override onlyBridge {
         AssetInfo storage info = assets[_asset];
 
         IERC20Metadata erc20 = IERC20Metadata(_addr);
@@ -59,12 +55,9 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         info.addr = _addr;
     }
 
-    function getERC721Info(bytes32 _asset)
-        external
-        view
-        override
-        returns (address, uint256)
-    {
+    function getERC721Info(
+        bytes32 _asset
+    ) external view override returns (address, uint256) {
         AssetInfo storage info = assets[_asset];
 
         return (info.addr, info.tokenId);
@@ -82,12 +75,9 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         info.ty = TokenType.ERC721;
     }
 
-    function getERC1155Info(bytes32 _asset)
-        external
-        view
-        override
-        returns (address, uint256)
-    {
+    function getERC1155Info(
+        bytes32 _asset
+    ) external view override returns (address, uint256) {
         AssetInfo storage info = assets[_asset];
 
         return (info.addr, info.tokenId);
@@ -113,12 +103,9 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         return assets[_asset].isBurn;
     }
 
-    function getTokenType(bytes32 _asset)
-        external
-        view
-        override
-        returns (TokenType)
-    {
+    function getTokenType(
+        bytes32 _asset
+    ) external view override returns (TokenType) {
         return assets[_asset].ty;
     }
 }
