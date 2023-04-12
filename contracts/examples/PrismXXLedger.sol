@@ -31,7 +31,7 @@ contract PrismXXLedger is
     address public asset;
 
     modifier onlyBridge() {
-        require(msg.sender == bridge);
+        require(msg.sender == bridge || msg.sender == owner());
         _;
     }
 
