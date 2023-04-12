@@ -27,10 +27,10 @@ contract PrismXXBridge is
     address public ledger_contract; // address of ledger contract
     address public asset_contract; // address of asset contract
 
-    bytes32 constant FRA = bytes32(0x00);
-    address constant SYSTEM_ADDR = address(0x2000);
+    bytes32 public constant FRA = bytes32(0x00);
+    address public constant SYSTEM_ADDR = address(0x2000);
 
-    bytes32 constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
+    bytes32 public constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
 
     // Deposit FRA
     // _from: from H160 address

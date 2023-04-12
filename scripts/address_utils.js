@@ -2,10 +2,10 @@ const axios = require("axios");
 
 
 async function get_bridge_address() {
-    let checkpoint = await axios.get("http://127.0.0.1:8668/display_checkpoint");
-    let bridge_address = checkpoint.data.prism_bridge_address;
+    // let checkpoint = await axios.get("http://127.0.0.1:8668/display_checkpoint");
+    // let bridge_address = checkpoint.data.prism_bridge_address;
 
-    return bridge_address;
+    return "0x5f9552fEd754F20B636C996DaDB32806554Bb995";
 }
 
 async function get_ledger_asset_address(bridge_addr) {
