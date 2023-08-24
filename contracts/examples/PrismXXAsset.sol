@@ -31,7 +31,7 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
 
     mapping(bytes32 => AssetInfo) public assets;
 
-    mapping(bytes32 => bytes32) public v1assets;
+    mapping(bytes32 => bytes32) public migration_v1assets;
 
     modifier onlyBridge() {
         require(msg.sender == bridge);
@@ -48,7 +48,7 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
 
 
     function setV1Asset(bytes32 v2asset, bytes32 v1asset) external onlyOwner {
-        v1assets[v2asset] = v1asset;
+        migration_v1assets[v2asset] = v1asset;
     }
 
     function getERC20Info(
@@ -131,7 +131,7 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         require(success && source.length == 32, "Precompile call failed");
 
         bytes32 asset = bytes32(source);
-        if (v1assets[asset] != bytes32(0)) {
+        if (migration_v1assets[asset] != bytes32(0)) {
             return v1assets[asset];
         }
         return asset;
@@ -159,8 +159,8 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         require(success && source.length == 32, "Precompile call failed");
 
         bytes32 asset = bytes32(source);
-        if (v1assets[asset] != bytes32(0)) {
-            return v1assets[asset];
+        if (migration_v1assets[asset] != bytes32(0)) {
+            return migration_v1assets[asset];
         }
         return asset;
     }
@@ -187,8 +187,8 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
         require(success && source.length == 32, "Precompile call failed");
 
         bytes32 asset = bytes32(source);
-        if (v1assets[asset] != bytes32(0)) {
-            return v1assets[asset];
+        if (migration_v1assets[asset] != bytes32(0)) {
+            return migration_v1assets[asset];
         }
         return asset;
     }
