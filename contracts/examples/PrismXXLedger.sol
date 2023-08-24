@@ -14,15 +14,13 @@ import "../interfaces/IPrismXXLedger.sol";
 import "../interfaces/IERC20Mintable.sol";
 import "../interfaces/IERC20Burnable.sol";
 import "./PrismXXAsset.sol";
-import "../AssetTypeUtils.sol";
 
 contract PrismXXLedger is
     Initializable,
     OwnableUpgradeable,
     IPrismXXLedger,
     ERC721HolderUpgradeable,
-    ERC1155HolderUpgradeable,
-    AssetTypeUtils
+    ERC1155HolderUpgradeable
 {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
@@ -69,7 +67,7 @@ contract PrismXXLedger is
     ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
-        bytes32 at = computeERC20AssetType(_frc20);
+        bytes32 at = ac.computeERC20AssetType(_frc20);
 
         if (ac.isBurn(at)) {
             IERC20Burnable ct = IERC20Burnable(_frc20);
@@ -95,7 +93,7 @@ contract PrismXXLedger is
     ) external override onlyBridge {
         PrismXXAsset ac = PrismXXAsset(asset);
 
-        bytes32 at = computeERC20AssetType(_frc20);
+        bytes32 at = ac.computeERC20AssetType(_frc20);
 
         if (ac.isBurn(at)) {
             IERC20Mintable ct = IERC20Mintable(_frc20);
