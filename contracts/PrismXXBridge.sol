@@ -9,15 +9,13 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interfaces/IPrismXXLedger.sol";
 import "./interfaces/IPrismXXAsset.sol";
-import "./AssetTypeUtils.sol";
 
 /**
  * @dev prismXXBridge cross-chain bridge contract.
  */
 contract PrismXXBridge is
     OwnableUpgradeable,
-    ReentrancyGuardUpgradeable,
-    AssetTypeUtils
+    ReentrancyGuardUpgradeable
 {
     using AddressUpgradeable for address;
     using AddressUpgradeable for address payable;
@@ -226,9 +224,9 @@ contract PrismXXBridge is
             value = _shrinkDecimal(_value, decimal - 6);
         }
 
-        bytes32 asset = computeERC20AssetType(_frc20);
-
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        bytes32 asset = ac.computeERC20AssetType(_frc20);
 
         ac.setERC20Info(asset, _frc20);
 
@@ -252,9 +250,10 @@ contract PrismXXBridge is
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
         require(_to.length == 32, "to length must be 32");
-        bytes32 asset = computeERC721AssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        bytes32 asset = ac.computeERC721AssetType(_addr, _id);
 
         ac.setERC721Info(asset, _addr, _id);
 
@@ -279,9 +278,10 @@ contract PrismXXBridge is
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
         require(_to.length == 32, "to length must be 32");
-        bytes32 asset = computeERC1155AssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
+
+        bytes32 asset = ac.computeERC1155AssetType(_addr, _id);
 
         ac.setERC1155Info(asset, _addr, _id);
 

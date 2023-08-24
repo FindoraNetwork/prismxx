@@ -35,4 +35,10 @@ interface IPrismXXAsset {
     }
 
     function getTokenType(bytes32 _asset) external view returns (TokenType);
+
+    function computeERC20AssetType(address addr) external view returns (bytes32);
+
+    function computeERC721AssetType(address addr, uint256 tokenId) external view returns (bytes32);
+
+    function computeERC1155AssetType(address addr, uint256 tokenId) external view returns (bytes32);
 }
