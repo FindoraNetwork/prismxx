@@ -132,7 +132,7 @@ contract PrismXXAsset is Initializable, OwnableUpgradeable, IPrismXXAsset {
 
         bytes32 asset = bytes32(source);
         if (migration_v1assets[asset] != bytes32(0)) {
-            return v1assets[asset];
+            return migration_v1assets[asset];
         }
         return asset;
     }
