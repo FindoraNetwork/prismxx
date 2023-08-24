@@ -207,7 +207,7 @@ contract PrismXXBridge is
     ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
-
+        require(_to.length == 32, "to length must be 32");
         IERC20MetadataUpgradeable erc20 = IERC20MetadataUpgradeable(_frc20);
 
         uint8 decimal = erc20.decimals();
@@ -251,7 +251,7 @@ contract PrismXXBridge is
     ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
-
+        require(_to.length == 32, "to length must be 32");
         bytes32 asset = computeERC721AssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
@@ -278,7 +278,7 @@ contract PrismXXBridge is
     ) public nonReentrant {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
-
+        require(_to.length == 32, "to length must be 32");
         bytes32 asset = computeERC1155AssetType(_addr, _id);
 
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
