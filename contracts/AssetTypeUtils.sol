@@ -18,14 +18,15 @@ contract AssetTypeUtils {
         return bytes32(source);
     }
 
-    function computeERC721AssetType(
-        address addr,
-        uint256 tokenId
-    ) public view returns (bytes32) {
+    function computeERC721AssetType(address addr, uint256 tokenId)
+        public
+        view
+        returns (bytes32)
+    {
         bytes32 code = bytes32(tokenId);
         bytes memory tmp0 = new bytes(32);
         bytes memory tmp1 = new bytes(32);
-        uint i = 0;
+        uint256 i = 0;
         for (i = 0; i < 31; i++) {
             tmp0[i] = code[i];
         }
@@ -40,14 +41,15 @@ contract AssetTypeUtils {
         return bytes32(source);
     }
 
-    function computeERC1155AssetType(
-        address addr,
-        uint256 tokenId
-    ) public view returns (bytes32 result) {
+    function computeERC1155AssetType(address addr, uint256 tokenId)
+        public
+        view
+        returns (bytes32 result)
+    {
         bytes32 code = bytes32(tokenId);
         bytes memory tmp0 = new bytes(32);
         bytes memory tmp1 = new bytes(32);
-        uint i = 0;
+        uint256 i = 0;
         for (i = 0; i < 31; i++) {
             tmp0[i] = code[i];
         }

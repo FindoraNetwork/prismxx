@@ -16,7 +16,7 @@ async function deploy_erc20() {
 async function main() {
   let addrs = await utils.get_prism_addrs();
 
-  const receiver = "0x39ad91453cdd6b203c57638113bc69de7dcd2ab8c62711534996726d73970834";
+  const receiver = "0x1d99f1c0f2393c3ff1a505f536a2931d7a8f7475d55ed19eef2434248dcc553b";
 
   let gld = await deploy_erc20();
 

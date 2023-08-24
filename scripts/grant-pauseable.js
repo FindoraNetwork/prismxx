@@ -9,9 +9,9 @@ async function main() {
     const factory = await hre.ethers.getContractFactory("PrismXXBridge");
     const bridge = await factory.attach(addrs.bridge);
 
-    const value = hre.ethers.utils.parseEther("1");
+    const role = await bridge.PAUSABLE_ROLE();
 
-    let receipt1 = await bridge.depositFRA("0x1d99f1c0f2393c3ff1a505f536a2931d7a8f7475d55ed19eef2434248dcc553b", { value });
+    let receipt1 = await bridge.grantRole(role, 0x72488baa718f52b76118c79168e55c209056a2e6);
 
     console.log(receipt1.hash)
 }

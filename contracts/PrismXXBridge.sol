@@ -2,9 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interfaces/IPrismXXLedger.sol";
@@ -15,7 +16,8 @@ import "./AssetTypeUtils.sol";
  * @dev prismXXBridge cross-chain bridge contract.
  */
 contract PrismXXBridge is
-    OwnableUpgradeable,
+    AccessControlEnumerableUpgradeable,
+    PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     AssetTypeUtils
 {
@@ -25,8 +27,10 @@ contract PrismXXBridge is
     address public ledger_contract; // address of ledger contract
     address public asset_contract; // address of asset contract
 
-    bytes32 constant FRA = bytes32(0x00);
-    address constant SYSTEM_ADDR = address(0x2000);
+    bytes32 public constant FRA = bytes32(0x00);
+    address public constant SYSTEM_ADDR = address(0x2000);
+
+    bytes32 public constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
 
     // Deposit FRA
     // _from: from H160 address
@@ -93,8 +97,7 @@ contract PrismXXBridge is
     );
 
     function initialize() public initializer {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     modifier onlySystem() {
@@ -115,7 +118,10 @@ contract PrismXXBridge is
      * @dev Set contarct address of ledger, this function can only be called by owner.
      * @param _ledger_contract address of ledger contract.
      */
-    function adminSetLedger(address _ledger_contract) public onlyOwner {
+    function adminSetLedger(address _ledger_contract)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         ledger_contract = _ledger_contract;
     }
 
@@ -123,38 +129,52 @@ contract PrismXXBridge is
      * @dev Set contarct address of asset, this function can only be called by owner.
      * @param _asset_contract address of asset contract.
      */
-    function adminSetAsset(address _asset_contract) public onlyOwner {
+    function adminSetAsset(address _asset_contract)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         asset_contract = _asset_contract;
     }
 
+    function pause() public onlyRole(PAUSABLE_ROLE) {
+        _pause();
+    }
+
+    function unpause() public onlyRole(PAUSABLE_ROLE) {
+        _unpause();
+    }
+
     // Utils:
-    function _checkDecimal(
-        uint256 amount,
-        uint8 decimal
-    ) private pure returns (uint256) {
-        uint256 pow = 10 ** decimal;
+    function _checkDecimal(uint256 amount, uint8 decimal)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 pow = 10**decimal;
 
         uint256 a = amount / pow;
 
         return a * pow;
     }
 
-    function _shrinkDecimal(
-        uint256 amount,
-        uint8 decimal
-    ) private pure returns (uint256) {
-        uint256 pow = 10 ** decimal;
+    function _shrinkDecimal(uint256 amount, uint8 decimal)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 pow = 10**decimal;
 
         uint256 a = amount / pow;
 
         return a;
     }
 
-    function _extendDecimal(
-        uint256 amount,
-        uint8 decimal
-    ) private pure returns (uint256) {
-        uint256 pow = 10 ** decimal;
+    function _extendDecimal(uint256 amount, uint8 decimal)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 pow = 10**decimal;
 
         return amount * pow;
     }
@@ -165,7 +185,12 @@ contract PrismXXBridge is
      *
      * @param _to address of asset contract.
      */
-    function depositFRA(bytes calldata _to) public payable nonReentrant {
+    function depositFRA(bytes calldata _to)
+        public
+        payable
+        nonReentrant
+        whenNotPaused
+    {
         // Decimal mapping for FRA.
         uint256 amount = msg.value;
 
@@ -186,7 +211,7 @@ contract PrismXXBridge is
         address payable to,
         uint256 value,
         bytes calldata data
-    ) public onlySystem notPrismContract(to) nonReentrant {
+    ) public onlySystem notPrismContract(to) nonReentrant whenNotPaused {
         if (to.isContract()) {
             to.functionCallWithValue(data, value);
         } else {
@@ -204,7 +229,7 @@ contract PrismXXBridge is
         address _frc20,
         bytes calldata _to,
         uint256 _value
-    ) public nonReentrant {
+    ) public nonReentrant whenNotPaused {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
         require(_to.length == 32, "to length must be 32");
@@ -248,7 +273,7 @@ contract PrismXXBridge is
         address _addr,
         bytes calldata _to,
         uint256 _id
-    ) public nonReentrant {
+    ) public nonReentrant whenNotPaused {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
         require(_to.length == 32, "to length must be 32");
@@ -275,7 +300,7 @@ contract PrismXXBridge is
         bytes calldata _to,
         uint256 _id,
         uint256 _amount
-    ) public nonReentrant {
+    ) public nonReentrant whenNotPaused {
         require(asset_contract != address(0), "Prism asset must be inital");
         require(ledger_contract != address(0), "Prism ledger must be inital");
         require(_to.length == 32, "to length must be 32");
@@ -312,7 +337,7 @@ contract PrismXXBridge is
         address _to,
         uint256 _value,
         bytes calldata _data
-    ) public onlySystem notPrismContract(_to) nonReentrant {
+    ) public onlySystem notPrismContract(_to) nonReentrant whenNotPaused {
         IPrismXXLedger lc = IPrismXXLedger(ledger_contract);
         IPrismXXAsset ac = IPrismXXAsset(asset_contract);
 
